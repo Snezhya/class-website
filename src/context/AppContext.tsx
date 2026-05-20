@@ -4,6 +4,8 @@ import {
   initialMembers, initialTasks, initialSchedule, initialNotes, initialGallery, defaultSettings 
 } from '../data/initialData';
 import { storage } from '../utils/storage';
+import { supabase } from '../lib/supabase';
+import { fetchMembers, addMemberDb, editMemberDb, deleteMemberDb, mapDbToMember } from '../utils/supabaseApi';
 
 interface AppContextType {
   members: Member[];
@@ -14,16 +16,18 @@ interface AppContextType {
   settings: SystemSettings;
   isAdmin: boolean;
   activityLogs: string[];
+  dbLoading: boolean;
+  dbError: string | null;
   
   // Auth actions
-  login: (password: string) => boolean;
+  login: (password: string) => Promise<boolean>;
   logout: () => void;
 
   // Member CRUD
-  addMember: (member: Omit<Member, 'id' | 'order'>) => void;
-  editMember: (id: string, member: Partial<Member>) => void;
-  deleteMember: (id: string) => void;
-  reorderMembers: (members: Member[]) => void;
+  addMember: (member: Omit<Member, 'id' | 'order'>) => Promise<void>;
+  editMember: (id: string, member: Partial<Member>) => Promise<void>;
+  deleteMember: (id: string) => Promise<void>;
+  reorderMembers: (members: Member[]) => Promise<void>;
 
   // Task CRUD
   addTask: (task: Omit<Task, 'id'>) => void;
@@ -58,7 +62,10 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Initialize States from storage or default
-  const [members, setMembers] = useState<Member[]>(() => storage.get('members', initialMembers));
+  const [members, setMembers] = useState<Member[]>([]);
+  const [dbLoading, setDbLoading] = useState<boolean>(true);
+  const [dbError, setDbError] = useState<string | null>(null);
+
   const [tasks, setTasks] = useState<Task[]>(() => storage.get('tasks', initialTasks));
   const [schedules, setSchedules] = useState<ScheduleItem[]>(() => storage.get('schedules', initialSchedule));
   const [notes, setNotes] = useState<ClassNote[]>(() => storage.get('notes', initialNotes));
@@ -73,69 +80,307 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     ])
   );
 
-  // Sync to storage when state changes
-  useEffect(() => { storage.set('members', members); }, [members]);
+  // Log action helper
+  const addActivityLog = (message: string) => {
+    const timestamp = new Date().toLocaleTimeString('id-ID');
+    const dateStr = new Date().toISOString().split('T')[0];
+    const logEntry = `[${dateStr} ${timestamp}] ${message}`;
+    setActivityLogs(prev => {
+      const updated = [logEntry, ...prev.slice(0, 49)];
+      storage.set('activity_logs', updated);
+      return updated;
+    });
+  };
+
+  // 1. Initial Member Fetch and Realtime Listener Setup
+  useEffect(() => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    const loadMembers = async () => {
+      if (!supabaseUrl || !supabaseAnonKey) {
+        // Fallback to local storage or initial data
+        const local = storage.get('members', initialMembers);
+        setMembers(local);
+        setDbLoading(false);
+        addActivityLog('SYSTEM DAEMON: Supabase credentials not found. Falling back to Local Roster.');
+        return;
+      }
+
+      setDbLoading(true);
+      try {
+        const data = await fetchMembers();
+        setMembers(data);
+        storage.set('members', data); // cache locally
+        setDbError(null);
+        addActivityLog('MEMBER DAEMON: Fetched roster from Supabase.');
+      } catch (err: any) {
+        setDbError(err.message);
+        addActivityLog(`MEMBER DAEMON: Failed to fetch remote roster - ${err.message}`);
+        // Fallback
+        const local = storage.get('members', initialMembers);
+        setMembers(local);
+      } finally {
+        setDbLoading(false);
+      }
+    };
+
+    loadMembers();
+
+    // Setup Realtime websocket listener if configured
+    let channel: any = null;
+    if (supabaseUrl && supabaseAnonKey) {
+      channel = supabase
+        .channel('public:member')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'member' }, (payload) => {
+          const { eventType, new: newRow, old: oldRow } = payload;
+          addActivityLog(`REALTIME DAEMON: Member record changed [${eventType}]`);
+
+          if (eventType === 'INSERT') {
+            const addedMember = mapDbToMember(newRow);
+            setMembers(prev => {
+              if (prev.some(m => m.id === addedMember.id)) return prev;
+              const updated = [...prev, addedMember].sort((a, b) => a.order - b.order);
+              storage.set('members', updated);
+              return updated;
+            });
+          } else if (eventType === 'UPDATE') {
+            const updatedMember = mapDbToMember(newRow);
+            setMembers(prev => {
+              const updated = prev.map(m => m.id === updatedMember.id ? updatedMember : m).sort((a, b) => a.order - b.order);
+              storage.set('members', updated);
+              return updated;
+            });
+          } else if (eventType === 'DELETE') {
+            const deletedId = oldRow.id.toString();
+            setMembers(prev => {
+              const updated = prev.filter(m => m.id !== deletedId);
+              storage.set('members', updated);
+              return updated;
+            });
+          }
+        })
+        .subscribe();
+    }
+
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, []);
+
+  // 2. Auth Session Check & Auth State Subscription
+  useEffect(() => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseAnonKey) return;
+
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session) {
+        setIsAdmin(true);
+        storage.set('is_admin_session', true);
+        addActivityLog('AUTH DAEMON: Active session found. Admin access granted.');
+      }
+    };
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        setIsAdmin(true);
+        storage.set('is_admin_session', true);
+      } else {
+        setIsAdmin(false);
+        storage.set('is_admin_session', false);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // Sync state variables to storage when local updates occur
   useEffect(() => { storage.set('tasks', tasks); }, [tasks]);
   useEffect(() => { storage.set('schedules', schedules); }, [schedules]);
   useEffect(() => { storage.set('notes', notes); }, [notes]);
   useEffect(() => { storage.set('gallery', gallery); }, [gallery]);
   useEffect(() => { storage.set('settings', settings); }, [settings]);
   useEffect(() => { storage.set('is_admin_session', isAdmin); }, [isAdmin]);
-  useEffect(() => { storage.set('activity_logs', activityLogs); }, [activityLogs]);
-
-  // Log action helper
-  const addActivityLog = (message: string) => {
-    const timestamp = new Date().toLocaleTimeString('id-ID');
-    const dateStr = new Date().toISOString().split('T')[0];
-    const logEntry = `[${dateStr} ${timestamp}] ${message}`;
-    setActivityLogs(prev => [logEntry, ...prev.slice(0, 49)]); // keep last 50 logs
-  };
 
   // Auth Operations
-  const login = (password: string): boolean => {
+  const login = async (password: string): Promise<boolean> => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (supabaseUrl && supabaseAnonKey) {
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: 'admin@tjkt1.com',
+          password: password,
+        });
+
+        if (error) {
+          addActivityLog(`AUTH DAEMON: Supabase Auth error - ${error.message}`);
+        } else if (data?.user) {
+          setIsAdmin(true);
+          storage.set('is_admin_session', true);
+          addActivityLog('AUTH DAEMON: Admin user logged in via Supabase Auth.');
+          return true;
+        }
+      } catch (err: any) {
+        addActivityLog(`AUTH DAEMON: Supabase Auth subsystem failed - ${err.message}`);
+      }
+    }
+
+    // Offline / Legacy fallback
     const defaultPasscodes = ['admin123', 'tjkt1'];
     const envPasscode = import.meta.env.VITE_ADMIN_PASSCODE;
     const allowedPasscodes = envPasscode ? [...defaultPasscodes, envPasscode] : defaultPasscodes;
     
     if (allowedPasscodes.includes(password)) {
       setIsAdmin(true);
-      addActivityLog('AUTH DAEMON: Admin user logged in. Auth token generated.');
+      storage.set('is_admin_session', true);
+      addActivityLog('AUTH DAEMON: Admin logged in (offline fallback credentials).');
       return true;
     }
+
     addActivityLog('AUTH DAEMON: Failed login attempt. Invalid credentials.');
     return false;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (supabaseUrl && supabaseAnonKey) {
+      try {
+        await supabase.auth.signOut();
+      } catch (err: any) {
+        addActivityLog(`AUTH DAEMON: SignOut failed - ${err.message}`);
+      }
+    }
+
     setIsAdmin(false);
+    storage.set('is_admin_session', false);
     addActivityLog('AUTH DAEMON: Admin logged out. Session destroyed.');
   };
 
   // Member Operations
-  const addMember = (newMember: Omit<Member, 'id' | 'order'>) => {
-    const id = Math.random().toString(36).substring(2, 9);
+  const addMember = async (newMember: Omit<Member, 'id' | 'order'>) => {
     const order = members.length + 1;
-    const member: Member = { ...newMember, id, order };
-    setMembers(prev => [...prev, member]);
-    addActivityLog(`MEMBER DAEMON: Added new student '${member.name}'`);
+    const memberWithOrder = { ...newMember, order };
+
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (supabaseUrl && supabaseAnonKey) {
+      try {
+        const added = await addMemberDb(memberWithOrder);
+        setMembers(prev => {
+          if (prev.some(m => m.id === added.id)) return prev;
+          const updated = [...prev, added].sort((a, b) => a.order - b.order);
+          storage.set('members', updated);
+          return updated;
+        });
+        addActivityLog(`MEMBER DAEMON: Added student '${added.name}' to Supabase.`);
+      } catch (err: any) {
+        addActivityLog(`MEMBER DAEMON: Insert error - ${err.message}`);
+        throw err;
+      }
+    } else {
+      // Local fallback
+      const id = Math.random().toString(36).substring(2, 9);
+      const member: Member = { ...memberWithOrder, id };
+      setMembers(prev => {
+        const updated = [...prev, member];
+        storage.set('members', updated);
+        return updated;
+      });
+      addActivityLog(`MEMBER DAEMON: Added student '${member.name}' locally (offline mode).`);
+    }
   };
 
-  const editMember = (id: string, updatedData: Partial<Member>) => {
-    setMembers(prev => prev.map(m => m.id === id ? { ...m, ...updatedData } : m));
-    const member = members.find(m => m.id === id);
-    addActivityLog(`MEMBER DAEMON: Updated student data for '${member?.name || id}'`);
+  const editMember = async (id: string, updatedData: Partial<Member>) => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (supabaseUrl && supabaseAnonKey) {
+      try {
+        const updated = await editMemberDb(id, updatedData);
+        setMembers(prev => {
+          const updatedList = prev.map(m => m.id === id ? updated : m).sort((a, b) => a.order - b.order);
+          storage.set('members', updatedList);
+          return updatedList;
+        });
+        addActivityLog(`MEMBER DAEMON: Updated student '${updated.name}' details on Supabase.`);
+      } catch (err: any) {
+        addActivityLog(`MEMBER DAEMON: Update error - ${err.message}`);
+        throw err;
+      }
+    } else {
+      // Local fallback
+      setMembers(prev => {
+        const updatedList = prev.map(m => m.id === id ? { ...m, ...updatedData } : m);
+        storage.set('members', updatedList);
+        return updatedList;
+      });
+      const member = members.find(m => m.id === id);
+      addActivityLog(`MEMBER DAEMON: Updated student '${member?.name || id}' locally (offline mode).`);
+    }
   };
 
-  const deleteMember = (id: string) => {
-    const member = members.find(m => m.id === id);
-    setMembers(prev => prev.filter(m => m.id !== id));
-    addActivityLog(`MEMBER DAEMON: Deleted student registry for '${member?.name || id}'`);
+  const deleteMember = async (id: string) => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+    if (supabaseUrl && supabaseAnonKey) {
+      try {
+        await deleteMemberDb(id);
+        setMembers(prev => {
+          const updated = prev.filter(m => m.id !== id);
+          storage.set('members', updated);
+          return updated;
+        });
+        addActivityLog(`MEMBER DAEMON: Deleted student record (id: ${id}) from Supabase.`);
+      } catch (err: any) {
+        addActivityLog(`MEMBER DAEMON: Delete error - ${err.message}`);
+        throw err;
+      }
+    } else {
+      // Local fallback
+      const member = members.find(m => m.id === id);
+      setMembers(prev => {
+        const updated = prev.filter(m => m.id !== id);
+        storage.set('members', updated);
+        return updated;
+      });
+      addActivityLog(`MEMBER DAEMON: Deleted student '${member?.name || id}' locally (offline mode).`);
+    }
   };
 
-  const reorderMembers = (reorderedList: Member[]) => {
+  const reorderMembers = async (reorderedList: Member[]) => {
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
     const adjustedList = reorderedList.map((m, idx) => ({ ...m, order: idx + 1 }));
     setMembers(adjustedList);
-    addActivityLog('MEMBER DAEMON: Re-indexed student roster ordering');
+    storage.set('members', adjustedList);
+    addActivityLog('MEMBER DAEMON: Reordered roster indexes.');
+
+    if (supabaseUrl && supabaseAnonKey) {
+      try {
+        // Sequentially execute updates in background
+        for (const m of adjustedList) {
+          await editMemberDb(m.id, { order: m.order });
+        }
+        addActivityLog('MEMBER DAEMON: Pushed roster reordering to remote database.');
+      } catch (err: any) {
+        addActivityLog(`MEMBER DAEMON: Remote reorder sync warning - ${err.message}`);
+      }
+    }
   };
 
   // Task Operations
@@ -245,6 +490,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   return (
     <AppContext.Provider value={{
       members, tasks, schedules, notes, gallery, settings, isAdmin, activityLogs,
+      dbLoading, dbError,
       login, logout,
       addMember, editMember, deleteMember, reorderMembers,
       addTask, editTask, deleteTask, toggleTaskCompleted,
@@ -265,3 +511,4 @@ export const useApp = () => {
   }
   return context;
 };
+

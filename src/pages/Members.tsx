@@ -32,7 +32,7 @@ const Linkedin = (props: any) => (
 
 
 export const Members: React.FC = () => {
-  const { members } = useApp();
+  const { members, dbLoading } = useApp();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<'all' | 'core' | 'member'>('all');
@@ -155,7 +155,15 @@ export const Members: React.FC = () => {
 
       {/* Roster Layout Directory */}
       <div ref={containerRef} className="space-y-12">
-        {filteredMembers.length === 0 ? (
+        {dbLoading ? (
+          <div className="flex flex-col items-center justify-center p-12 space-y-4 border border-dashed border-brand-800 rounded-xl bg-brand-950/20 font-mono text-xs text-terminal-green">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-terminal-green animate-ping" />
+              <span>CONNECTING TO CLOUD DATABASE DAEMON...</span>
+            </div>
+            <span className="text-[10px] text-slate-500">Querying public.member registry table</span>
+          </div>
+        ) : filteredMembers.length === 0 ? (
           <EmptyState 
             title="NO_RECORDS_FOUND" 
             description="No student registry matches the query in this sector. Verify NIS or syntax parameter."

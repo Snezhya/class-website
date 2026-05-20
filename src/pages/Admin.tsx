@@ -3,8 +3,9 @@ import { useApp } from '../context/AppContext';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useToast } from '../context/ToastContext';
+import { uploadMemberPhoto } from '../utils/supabaseApi';
 import { 
-  ShieldAlert, Lock, RefreshCw, Eye, EyeOff, Trash2
+  ShieldAlert, Lock, Eye, EyeOff, Trash2, RefreshCw
 } from 'lucide-react';
 
 
@@ -31,26 +32,46 @@ export const Admin: React.FC = () => {
   const [memSkills, setMemSkills] = useState('');
   const [memIsCore, setMemIsCore] = useState(false);
   const [memStatus, setMemStatus] = useState<'active' | 'away' | 'offline'>('active');
+  const [memPhotoFile, setMemPhotoFile] = useState<File | null>(null);
+  const [memPhotoPreview, setMemPhotoPreview] = useState<string>('');
+  const [isSavingMember, setIsSavingMember] = useState(false);
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!passwordInput) return;
 
     setIsAuthenticating(true);
     setLoginLogs(prev => [...prev, `$ execute auth_session_init.sh --pass=******`]);
 
-    setTimeout(() => {
-      const success = login(passwordInput);
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const success = await login(passwordInput);
       if (success) {
         setLoginLogs(prev => [...prev, `[SUCCESS] Token generated. Access granted to root.`, `[SYSTEM] Mount user environment...`]);
         toast('Welcome back, System Admin', 'success');
       } else {
-        setLoginLogs(prev => [...prev, `[ERROR] Invalid administrative credentials. Denied.`, `[WARN] Log recorded at secure_audit.log`]);
-        toast('Authentication failed: Invalid passcode', 'error');
+        setLoginLogs(prev => [...prev, `[ERROR] Invalid credentials or password. Denied.`, `[WARN] Log recorded at secure_audit.log`]);
+        toast('Authentication failed', 'error');
         setIsAuthenticating(false);
       }
-      setPasswordInput('');
-    }, 1000);
+    } catch (err: any) {
+      setLoginLogs(prev => [...prev, `[FATAL] Auth failure - ${err.message}`]);
+      toast('Authentication failed: server error', 'error');
+      setIsAuthenticating(false);
+    }
+    setPasswordInput('');
+  };
+
+  const handlePhotoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setMemPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMemPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // Setup initial auth states if already logged in
@@ -60,33 +81,49 @@ export const Admin: React.FC = () => {
     }
   }, [isAdmin]);
 
-  const handleAddMemberAdmin = (e: React.FormEvent) => {
+  const handleAddMemberAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!memName.trim() || !memNis.trim()) {
       toast('Student Name and NIS are required', 'warning');
       return;
     }
-    addMember({
-      name: memName,
-      nis: memNis,
-      role: memRole,
-      bio: memBio || 'Student at SMKN 1 Boyolali Class XI TJKT 1.',
-      skills: memSkills ? memSkills.split(',').map(s => s.trim()) : ['Networking'],
-      socialLinks: {},
-      status: memStatus,
-      image: '/hu-tao-placeholder.png',
-      isCore: memIsCore
-    });
-    
-    // Reset Form
-    setMemName('');
-    setMemNis('');
-    setMemRole('Anggota');
-    setMemBio('');
-    setMemSkills('');
-    setMemIsCore(false);
-    setMemStatus('active');
-    toast('Student registry appended to class roster', 'success');
+
+    setIsSavingMember(true);
+    let imageUrl = '/hu-tao-placeholder.png';
+
+    try {
+      if (memPhotoFile) {
+        imageUrl = await uploadMemberPhoto(memPhotoFile);
+      }
+
+      await addMember({
+        name: memName,
+        nis: memNis,
+        role: memRole,
+        bio: memBio || 'Student at SMKN 1 Boyolali Class XI TJKT 1.',
+        skills: memSkills ? memSkills.split(',').map(s => s.trim()) : ['Networking'],
+        socialLinks: {},
+        status: memStatus,
+        image: imageUrl,
+        isCore: memIsCore
+      });
+      
+      // Reset Form
+      setMemName('');
+      setMemNis('');
+      setMemRole('Anggota');
+      setMemBio('');
+      setMemSkills('');
+      setMemIsCore(false);
+      setMemStatus('active');
+      setMemPhotoFile(null);
+      setMemPhotoPreview('');
+      toast('Student registry appended to class roster', 'success');
+    } catch (err: any) {
+      toast(`Failed to register student: ${err.message}`, 'error');
+    } finally {
+      setIsSavingMember(false);
+    }
   };
 
   const handleMoveMember = (idx: number, direction: 'up' | 'down') => {
@@ -520,6 +557,28 @@ export const Admin: React.FC = () => {
                 </div>
 
                 <div className="space-y-1">
+                  <label className="text-slate-400">STUDENT_PHOTO_UPLOAD</label>
+                  <div className="flex items-center gap-4 p-3 bg-brand-950/60 border border-brand-850 rounded-lg">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoFileChange}
+                      className="text-xs file:mr-4 file:py-1.5 file:px-3 file:rounded file:border file:border-brand-700 file:bg-brand-800 file:text-white file:cursor-pointer hover:file:bg-brand-750 text-slate-400"
+                    />
+                    {memPhotoPreview && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-slate-500">PREVIEW:</span>
+                        <img
+                          src={memPhotoPreview}
+                          alt="Roster preview"
+                          className="w-8 h-8 rounded object-cover border border-brand-750"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="space-y-1">
                   <label className="text-slate-400">STUDENT_BIO</label>
                   <textarea
                     placeholder="Brief developer profile / description..."
@@ -541,7 +600,9 @@ export const Admin: React.FC = () => {
                     <label htmlFor="isCore" className="text-slate-400 cursor-pointer">FEATURE_IN_CORE_OFFICERS</label>
                   </div>
 
-                  <Button variant="terminal" size="sm" type="submit">APPEND_STUDENT</Button>
+                  <Button variant="terminal" size="sm" type="submit" disabled={isSavingMember}>
+                    {isSavingMember ? 'SAVING_MEMBERS...' : 'APPEND_STUDENT'}
+                  </Button>
                 </div>
               </form>
             </Card>
