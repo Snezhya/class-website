@@ -169,7 +169,7 @@ export const Admin: React.FC = () => {
                   <input
                     type="password"
                     disabled={isAuthenticating}
-                    placeholder="Enter admin passcode (tjkt1 / admin123)..."
+                    placeholder="Enter admin passcode..."
                     value={passwordInput}
                     onChange={e => setPasswordInput(e.target.value)}
                     className="w-full pl-3 pr-10 py-2.5 bg-brand-950 border border-brand-800 rounded-lg text-xs text-terminal-green outline-none focus:border-brand-500 font-mono"
@@ -181,7 +181,7 @@ export const Admin: React.FC = () => {
               </div>
 
               <div className="flex justify-between items-center pt-2">
-                <span className="text-[9px] text-slate-500">PASSCODE HINT: tjkt1 or admin123</span>
+                <span className="text-[9px] text-slate-550">SYSTEM_NODE: ENCRYPTED_SESSION</span>
                 <Button 
                   variant="terminal" 
                   type="submit" 
