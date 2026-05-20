@@ -64,6 +64,9 @@ export const Home: React.FC = () => {
   const [cpuUsage, setCpuUsage] = React.useState(28);
   const [ramUsage, setRamUsage] = React.useState(42);
   const [dbPing, setDbPing] = React.useState(48);
+  const [netLoad, setNetLoad] = React.useState(31);
+  const [diskStor, setDiskStor] = React.useState(18);
+  const [sslHealth, setSslHealth] = React.useState(100);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -78,6 +81,18 @@ export const Home: React.FC = () => {
       setDbPing(prev => {
         const delta = Math.floor(Math.random() * 11) - 5; // -5 to +5
         return Math.min(Math.max(prev + delta, 25), 85);
+      });
+      setNetLoad(prev => {
+        const delta = Math.floor(Math.random() * 7) - 3; // -3 to +3
+        return Math.min(Math.max(prev + delta, 10), 60);
+      });
+      setDiskStor(prev => {
+        const delta = Math.floor(Math.random() * 3) - 1; // -1 to +1
+        return Math.min(Math.max(prev + delta, 15), 22);
+      });
+      setSslHealth(prev => {
+        const delta = Math.random() > 0.95 ? (Math.random() > 0.5 ? 1 : -1) : 0;
+        return Math.min(Math.max(prev + delta, 99), 100);
       });
     }, 3000);
     return () => clearInterval(timer);
@@ -324,93 +339,180 @@ export const Home: React.FC = () => {
           <Card title="Core Server Telemetry">
             <div className="space-y-5 font-mono text-xs">
               
-              {/* Circular Indicators Layout */}
-              <div className="grid grid-cols-3 gap-2 py-3 px-2 bg-brand-950/40 rounded-xl border border-brand-850">
-                {/* CPU Circle */}
+              {/* Circular Indicators Layout (3x2 Grid) */}
+              <div className="grid grid-cols-3 gap-y-4 gap-x-2 py-4 px-2 bg-brand-950/40 rounded-xl border border-brand-850">
+                {/* 1. CPU Circle */}
                 <div className="flex flex-col items-center gap-1.5">
-                  <div className="relative w-16 h-16">
+                  <div className="relative w-14 h-14">
                     <svg className="w-full h-full transform -rotate-90">
                       <circle
-                        cx="32"
-                        cy="32"
-                        r="26"
+                        cx="28"
+                        cy="28"
+                        r="23"
                         className="stroke-brand-900 fill-none"
-                        strokeWidth="3.5"
+                        strokeWidth="3"
                       />
                       <circle
-                        cx="32"
-                        cy="32"
-                        r="26"
+                        cx="28"
+                        cy="28"
+                        r="23"
                         className="stroke-brand-500 fill-none transition-all duration-1000"
-                        strokeWidth="3.5"
-                        strokeDasharray={2 * Math.PI * 26}
-                        strokeDashoffset={2 * Math.PI * 26 - (cpuUsage / 100) * (2 * Math.PI * 26)}
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
-                      {cpuUsage}%
-                    </div>
-                  </div>
-                  <span className="text-[9px] text-slate-400 font-bold tracking-wider">CPU_UTIL</span>
-                </div>
-
-                {/* RAM Circle */}
-                <div className="flex flex-col items-center gap-1.5">
-                  <div className="relative w-16 h-16">
-                    <svg className="w-full h-full transform -rotate-90">
-                      <circle
-                        cx="32"
-                        cy="32"
-                        r="26"
-                        className="stroke-brand-900 fill-none"
-                        strokeWidth="3.5"
-                      />
-                      <circle
-                        cx="32"
-                        cy="32"
-                        r="26"
-                        className="stroke-terminal-cyan fill-none transition-all duration-1000"
-                        strokeWidth="3.5"
-                        strokeDasharray={2 * Math.PI * 26}
-                        strokeDashoffset={2 * Math.PI * 26 - (ramUsage / 100) * (2 * Math.PI * 26)}
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
-                      {ramUsage}%
-                    </div>
-                  </div>
-                  <span className="text-[9px] text-slate-400 font-bold tracking-wider">MEM_ALLOC</span>
-                </div>
-
-                {/* DB Latency Circle */}
-                <div className="flex flex-col items-center gap-1.5">
-                  <div className="relative w-16 h-16">
-                    <svg className="w-full h-full transform -rotate-90">
-                      <circle
-                        cx="32"
-                        cy="32"
-                        r="26"
-                        className="stroke-brand-900 fill-none"
-                        strokeWidth="3.5"
-                      />
-                      <circle
-                        cx="32"
-                        cy="32"
-                        r="26"
-                        className="stroke-terminal-green fill-none transition-all duration-1000"
-                        strokeWidth="3.5"
-                        strokeDasharray={2 * Math.PI * 26}
-                        strokeDashoffset={2 * Math.PI * 26 - (Math.min(dbPing, 100) / 100) * (2 * Math.PI * 26)}
+                        strokeWidth="3"
+                        strokeDasharray={2 * Math.PI * 23}
+                        strokeDashoffset={2 * Math.PI * 23 - (cpuUsage / 100) * (2 * Math.PI * 23)}
                         strokeLinecap="round"
                       />
                     </svg>
                     <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white">
+                      {cpuUsage}%
+                    </div>
+                  </div>
+                  <span className="text-[8px] text-slate-400 font-bold tracking-wider">CPU_UTIL</span>
+                </div>
+
+                {/* 2. RAM Circle */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="relative w-14 h-14">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r="23"
+                        className="stroke-brand-900 fill-none"
+                        strokeWidth="3"
+                      />
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r="23"
+                        className="stroke-terminal-cyan fill-none transition-all duration-1000"
+                        strokeWidth="3"
+                        strokeDasharray={2 * Math.PI * 23}
+                        strokeDashoffset={2 * Math.PI * 23 - (ramUsage / 100) * (2 * Math.PI * 23)}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white">
+                      {ramUsage}%
+                    </div>
+                  </div>
+                  <span className="text-[8px] text-slate-400 font-bold tracking-wider">MEM_ALLOC</span>
+                </div>
+
+                {/* 3. DB Latency Circle */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="relative w-14 h-14">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r="23"
+                        className="stroke-brand-900 fill-none"
+                        strokeWidth="3"
+                      />
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r="23"
+                        className="stroke-terminal-green fill-none transition-all duration-1000"
+                        strokeWidth="3"
+                        strokeDasharray={2 * Math.PI * 23}
+                        strokeDashoffset={2 * Math.PI * 23 - (Math.min(dbPing, 100) / 100) * (2 * Math.PI * 23)}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-white">
                       {dbPing}ms
                     </div>
                   </div>
-                  <span className="text-[9px] text-slate-400 font-bold tracking-wider">DB_LATENCY</span>
+                  <span className="text-[8px] text-slate-400 font-bold tracking-wider">DB_PING</span>
+                </div>
+
+                {/* 4. Network Traffic Load */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="relative w-14 h-14">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r="23"
+                        className="stroke-brand-900 fill-none"
+                        strokeWidth="3"
+                      />
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r="23"
+                        className="stroke-terminal-yellow fill-none transition-all duration-1000"
+                        strokeWidth="3"
+                        strokeDasharray={2 * Math.PI * 23}
+                        strokeDashoffset={2 * Math.PI * 23 - (netLoad / 100) * (2 * Math.PI * 23)}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white">
+                      {netLoad}%
+                    </div>
+                  </div>
+                  <span className="text-[8px] text-slate-400 font-bold tracking-wider">NET_LOAD</span>
+                </div>
+
+                {/* 5. Disk Storage */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="relative w-14 h-14">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r="23"
+                        className="stroke-brand-900 fill-none"
+                        strokeWidth="3"
+                      />
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r="23"
+                        className="stroke-purple-500 fill-none transition-all duration-1000"
+                        strokeWidth="3"
+                        strokeDasharray={2 * Math.PI * 23}
+                        strokeDashoffset={2 * Math.PI * 23 - (diskStor / 100) * (2 * Math.PI * 23)}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white">
+                      {diskStor}%
+                    </div>
+                  </div>
+                  <span className="text-[8px] text-slate-400 font-bold tracking-wider">DISK_STOR</span>
+                </div>
+
+                {/* 6. Security SSL Health */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="relative w-14 h-14">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r="23"
+                        className="stroke-brand-900 fill-none"
+                        strokeWidth="3"
+                      />
+                      <circle
+                        cx="28"
+                        cy="28"
+                        r="23"
+                        className="stroke-emerald-400 fill-none transition-all duration-1000"
+                        strokeWidth="3"
+                        strokeDasharray={2 * Math.PI * 23}
+                        strokeDashoffset={2 * Math.PI * 23 - (sslHealth / 100) * (2 * Math.PI * 23)}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white">
+                      {sslHealth}%
+                    </div>
+                  </div>
+                  <span className="text-[8px] text-slate-400 font-bold tracking-wider">SSL_HEALTH</span>
                 </div>
               </div>
 
