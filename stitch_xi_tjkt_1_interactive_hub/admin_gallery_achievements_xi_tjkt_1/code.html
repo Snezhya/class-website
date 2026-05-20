@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>XI TJKT 1 - Gallery &amp; Achievements Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@400&amp;family=Geist:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#adc6ff",
+                    "surface-tint": "#adc6ff",
+                    "outline-variant": "#424754",
+                    "surface": "#0b1326",
+                    "tertiary-fixed": "#ffd8e7",
+                    "tertiary": "#ffafd3",
+                    "on-tertiary-container": "#560038",
+                    "surface-container-highest": "#2d3449",
+                    "on-primary-fixed-variant": "#004395",
+                    "on-primary-container": "#00285d",
+                    "tertiary-fixed-dim": "#ffafd3",
+                    "outline": "#8c909f",
+                    "secondary-fixed": "#acedff",
+                    "on-error-container": "#ffdad6",
+                    "error-container": "#93000a",
+                    "surface-dim": "#0b1326",
+                    "secondary": "#4cd7f6",
+                    "on-surface-variant": "#c2c6d6",
+                    "on-secondary-fixed": "#001f26",
+                    "on-background": "#dae2fd",
+                    "surface-container-lowest": "#060e20",
+                    "on-error": "#690005",
+                    "error": "#ffb4ab",
+                    "on-surface": "#dae2fd",
+                    "on-secondary": "#003640",
+                    "on-tertiary-fixed-variant": "#85145a",
+                    "tertiary-container": "#e364a7",
+                    "on-secondary-fixed-variant": "#004e5c",
+                    "on-primary-fixed": "#001a42",
+                    "on-primary": "#002e6a",
+                    "primary-container": "#4d8eff",
+                    "on-secondary-container": "#00424e",
+                    "primary": "#adc6ff",
+                    "on-tertiary-fixed": "#3d0026",
+                    "inverse-primary": "#005ac2",
+                    "surface-container-low": "#131b2e",
+                    "surface-container-high": "#222a3d",
+                    "on-tertiary": "#620040",
+                    "background": "#0b1326",
+                    "surface-container": "#171f33",
+                    "surface-variant": "#2d3449",
+                    "surface-bright": "#31394d",
+                    "inverse-on-surface": "#283044",
+                    "secondary-container": "#03b5d3",
+                    "inverse-surface": "#dae2fd",
+                    "primary-fixed": "#d8e2ff",
+                    "secondary-fixed-dim": "#4cd7f6"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "unit-12": "3rem",
+                    "gutter": "24px",
+                    "base": "4px",
+                    "unit-1": "0.25rem",
+                    "unit-8": "2rem",
+                    "unit-4": "1rem",
+                    "unit-2": "0.5rem",
+                    "container-max": "1280px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Inter"],
+                    "headline-xl": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "code-sm": ["JetBrains Mono"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Geist"],
+                    "headline-lg-mobile": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "code-sm": ["13px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(45, 52, 73, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            border-color: rgba(173, 198, 255, 0.4);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .ghost-border {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glow-cyan:focus {
+            border-bottom: 2px solid #4cd7f6;
+            outline: none;
+            box-shadow: 0 4px 12px -2px rgba(76, 215, 246, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0b1326;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #424754;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary/30">
+<!-- SideNavBar Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 border-r border-outline-variant bg-surface flex flex-col py-unit-4 px-unit-2 z-50">
+<div class="mb-unit-8 px-unit-4">
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface">XI TJKT 1</h1>
+<p class="font-label-md text-label-md text-on-surface-variant opacity-70">Admin Console</p>
+</div>
+<nav class="flex-1 space-y-1 custom-scrollbar overflow-y-auto px-unit-2">
+<!-- Navigation Items Mapping -->
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-body-md">Members</span>
+</a>
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-primary bg-primary-container/10 font-bold transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">collections</span>
+<span class="font-body-md">Gallery</span>
+</a>
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">workspace_premium</span>
+<span class="font-body-md">Achievements</span>
+</a>
+<div class="pt-4 pb-2 px-unit-4 text-[10px] uppercase tracking-widest text-outline font-bold">Layout</div>
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">view_quilt</span>
+<span class="font-body-md">Hero Section</span>
+</a>
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">wallpaper</span>
+<span class="font-body-md">Background</span>
+</a>
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="font-body-md">Statistics</span>
+</a>
+<div class="pt-4 pb-2 px-unit-4 text-[10px] uppercase tracking-widest text-outline font-bold">System</div>
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">palette</span>
+<span class="font-body-md">Design</span>
+</a>
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">campaign</span>
+<span class="font-body-md">Announcements</span>
+</a>
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined">bottom_panel_close</span>
+<span class="font-body-md">Footer</span>
+</a>
+</nav>
+<div class="mt-auto px-unit-4 py-unit-4">
+<button class="w-full flex items-center justify-center gap-2 bg-primary-container text-on-primary-container font-bold py-3 rounded-xl hover:opacity-90 transition-all">
+<span class="material-symbols-outlined">system_update_alt</span>
+<span>New Update</span>
+</button>
+</div>
+</aside>
+<!-- TopAppBar Shell -->
+<header class="ml-64 h-16 sticky top-0 z-40 flex justify-between items-center px-gutter bg-surface/60 backdrop-blur-md border-b border-outline-variant">
+<div class="flex items-center gap-4 flex-1">
+<div class="relative w-96 max-w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-sm">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-label-md font-label-md focus:ring-1 focus:ring-primary" placeholder="Search resources..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 border-r border-outline-variant pr-6">
+<button class="relative text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+<div class="flex items-center gap-3">
+<div class="text-right hidden sm:block">
+<p class="font-label-md text-label-md font-bold text-on-surface">Admin User</p>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest">Lead Engineer</p>
+</div>
+<img alt="Administrator Profile" class="w-10 h-10 rounded-full border border-outline-variant object-cover" data-alt="A professional headshot of a young tech administrator in a modern office. He is wearing a sleek dark turtleneck and minimal glasses, looking confidently at the camera. The background is a soft-focus laboratory with glowing server racks in blue and cyan tones, maintaining a high-tech dark mode aesthetic with clean, professional lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpzXl4iEcflISSsmQNxxNu8h7JHwMJgKxA4lWid2sCe5eU7q3l3ouVHVzLxPGCTkYEgs3QqKINnBqyKE9tVMrd-23qgfJDTMkWeq4Tc4ibxAKHpVsJ5r32fKgeRi9_By8nt5YOCE9pUzTtfBAcsC16PTkVmxVEafk4OQlfSNrhNq-IQ8ODhwDYgIkfZZhGQiDoItYk8ghFjBoLF1REQpE1YcwmORhH8n__QmlAGkRbvXlGKHuacGiqFE9eYk_WbxcDfKL8TPprRkVh"/>
+</div>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="ml-64 p-gutter max-w-container-max mx-auto">
+<!-- Header Section -->
+<section class="mb-unit-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
+<div>
+<h2 class="font-headline-xl text-headline-xl text-on-surface tracking-tighter mb-2">Assets &amp; Honors</h2>
+<p class="text-on-surface-variant font-body-lg max-w-2xl">Manage the digital repository of TJKT-1 events and institutional recognitions. Real-time updates for the public landing page.</p>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-low p-1.5 rounded-xl border border-outline-variant">
+<button class="px-6 py-2.5 rounded-lg bg-surface-container-highest text-on-surface font-label-md text-label-md transition-all">Drafts</button>
+<button class="px-6 py-2.5 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all">Published</button>
+<div class="ml-4 flex items-center gap-2 pr-4">
+<span class="text-[10px] font-bold text-outline uppercase tracking-widest">Visible</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</section>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-6 items-start">
+<!-- Gallery Management (Left Column) -->
+<div class="col-span-12 lg:col-span-7 space-y-6">
+<!-- Upload Dropzone -->
+<div class="glass-card rounded-2xl p-unit-8 border-dashed border-2 border-outline-variant flex flex-col items-center justify-center group cursor-pointer hover:border-primary/50 transition-all">
+<div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary text-3xl">cloud_upload</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-1">Upload New Media</h3>
+<p class="text-on-surface-variant text-center max-w-xs">Drag and drop high-resolution networking event photos here. Supports WEBP, PNG, JPG.</p>
+<button class="mt-6 px-8 py-3 bg-gradient-to-r from-[#3B82F6] to-[#06B6D4] text-white font-bold rounded-xl shadow-lg shadow-primary/20">Select Files</button>
+</div>
+<!-- Gallery Grid -->
+<div class="glass-card rounded-2xl overflow-hidden">
+<div class="p-unit-6 border-b border-outline-variant flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">collections_bookmark</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Gallery Assets</h3>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-lg hover:bg-surface-container-highest text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">filter_list</span>
+</button>
+<button class="p-2 rounded-lg hover:bg-surface-container-highest text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">reorder</span>
+</button>
+</div>
+</div>
+<div class="p-unit-6 grid grid-cols-2 sm:grid-cols-3 gap-4">
+<!-- Image Items -->
+<div class="group relative aspect-square rounded-xl overflow-hidden border border-outline-variant">
+<img alt="Server Room Gallery" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A macro shot of illuminated ethernet cables plugged into a high-end network switch. The LEDs are glowing bright green and blue, creating a bokeh effect in the background. The aesthetic is clean, technical, and hyper-modern, fitting a dark-tech networking laboratory theme." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBdlz6zYZjzfsGm2kNe0HFzCNX818lHRD5_vOx2DQBRY8LzMHAB1f8Pd-tQYXP_dOc2-IFb9xBMQE_ABX_fI_FpG__PX0-S88XeD1qgPY0PIaydC2HutPInmDTTErkKDw3qmGKjcdaNr4ntsqyrZTzzq_hA5LvyHG0POGMYSApJ5y7mPoNRbW_1hJnggUrX6h_RNmTNqYAYz8TLRp8TXgbpwgVyS3m8DBKCO_EYlri4Z40CuVhy6CtaBI-FO6qLlA5mEhIjABZrKrM8"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+<div class="flex justify-between items-center">
+<span class="text-[10px] font-code-sm text-white/70">LAB_01.JPG</span>
+<div class="flex gap-1">
+<button class="p-1.5 bg-surface/50 rounded-md hover:bg-error/50 transition-colors">
+<span class="material-symbols-outlined text-xs">delete</span>
+</button>
+<button class="p-1.5 bg-surface/50 rounded-md hover:bg-primary/50 transition-colors">
+<span class="material-symbols-outlined text-xs">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="group relative aspect-square rounded-xl overflow-hidden border border-outline-variant">
+<img alt="Networking Workshop" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="Top-down view of a student's hands meticulously crimping an RJ45 connector onto a blue Cat6 cable. The workbench is clean slate-gray, featuring professional networking tools and a laptop showing terminal code. The lighting is focused and cool-toned, emphasizing precision and technical skill." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVW-2ipdj6UtWrmnhpeMnUuZkE-hBRy48j_gEMBU26L5cT07IlNa5NPe1RiEdlcrL7jnEkWHC8qoVIRYDGAiCuhTmzM0OjviYympfXh9HXlSOzaLayMtLjV7ceqQrMXPh1fSUQjJM_5LECHdjoBWuHvLBRA-xBBgYi5frQ7fuTD0jS7_yOAKMCcUp0icVkW-fdNOrl8-jEaTB4O0NF1eR8v5FMj9hIg7IqSU9d51hOribF5J8_hUW2aFGNoLULK6AdlZFxkB7GODz-"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+<div class="flex justify-between items-center">
+<span class="text-[10px] font-code-sm text-white/70">EVENT_NET.JPG</span>
+<div class="flex gap-1">
+<button class="p-1.5 bg-surface/50 rounded-md hover:bg-error/50 transition-colors">
+<span class="material-symbols-outlined text-xs">delete</span>
+</button>
+<button class="p-1.5 bg-surface/50 rounded-md hover:bg-primary/50 transition-colors">
+<span class="material-symbols-outlined text-xs">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="group relative aspect-square rounded-xl overflow-hidden border border-outline-variant">
+<img alt="Cybersecurity Lab" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" data-alt="A dark, atmospheric shot of a computer monitor displaying complex network security diagrams and scrolling lines of code. The screen's glow illuminates a mechanical keyboard with cyan backlighting. The background is a dimly lit high-tech workspace with subtle glass reflections and a futuristic feel." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZsGoBEym9q0lbDLb3KmFuRaNe10gHVq_7ZfRcnBTRVU2zOWO-bZQsHtptjHfqFdFct2Um5uUc46-XOSKiP-81dQ122P0XzvNRQ9SHBQfTqZ688GMsSdRWRLvEj7fFn6zsLQsVBLpPKV_h8Aik2fVzWQ28slI7izvXJPefufXfjbBgPpgVMwdt1LHd3bDTsOVf66mF2x_2tidc4HqGpfmh1REwJB9h4G0UNFyAqlI5HN4gi45oHgu0Jjt0anWIs5iCGI4Nt-DMkbqx"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+<div class="flex justify-between items-center">
+<span class="text-[10px] font-code-sm text-white/70">CYBER_SEC.JPG</span>
+<div class="flex gap-1">
+<button class="p-1.5 bg-surface/50 rounded-md hover:bg-error/50 transition-colors">
+<span class="material-symbols-outlined text-xs">delete</span>
+</button>
+<button class="p-1.5 bg-surface/50 rounded-md hover:bg-primary/50 transition-colors">
+<span class="material-symbols-outlined text-xs">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Empty Placeholder for Addition -->
+<div class="aspect-square rounded-xl border border-dashed border-outline-variant flex items-center justify-center hover:bg-surface-container-low transition-colors group cursor-pointer">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-3xl">add_a_photo</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Achievement Form (Right Column) -->
+<div class="col-span-12 lg:col-span-5 space-y-6">
+<div class="glass-card rounded-2xl p-unit-6 sticky top-24">
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-secondary">workspace_premium</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Manage Achievements</h3>
+</div>
+<form class="space-y-6">
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-outline uppercase tracking-widest block">Achievement Title</label>
+<input class="w-full bg-surface-container-low border-b border-outline-variant glow-cyan py-3 px-0 text-on-surface focus:ring-0" placeholder="e.g. National Robotics Championship" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-outline uppercase tracking-widest block">Award Type</label>
+<select class="w-full bg-surface-container-low border-b border-outline-variant glow-cyan py-3 px-0 text-on-surface focus:ring-0 appearance-none">
+<option>Gold Medal</option>
+<option>Silver Medal</option>
+<option>Bronze Medal</option>
+<option>First Place</option>
+<option>Participation</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-outline uppercase tracking-widest block">Year</label>
+<input class="w-full bg-surface-container-low border-b border-outline-variant glow-cyan py-3 px-0 text-on-surface focus:ring-0" type="number" value="2024"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-outline uppercase tracking-widest block">Description (Optional)</label>
+<textarea class="w-full bg-surface-container-low border-b border-outline-variant glow-cyan py-3 px-0 text-on-surface focus:ring-0 resize-none" placeholder="Brief details about the achievement..." rows="3"></textarea>
+</div>
+<button class="w-full py-4 bg-primary text-on-primary font-bold rounded-xl flex items-center justify-center gap-2 hover:opacity-90 transition-all shadow-lg shadow-primary/10" type="submit">
+<span class="material-symbols-outlined">add_circle</span>
+<span>Add Achievement Record</span>
+</button>
+</form>
+<div class="mt-10">
+<h4 class="font-label-md text-label-md text-outline uppercase tracking-widest mb-4">Current Honors</h4>
+<div class="space-y-3">
+<!-- Achievement Item -->
+<div class="flex items-center gap-4 p-3 bg-surface-container-lowest rounded-xl border border-outline-variant group hover:border-secondary/40 transition-all">
+<div class="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined">emoji_events</span>
+</div>
+<div class="flex-1">
+<p class="font-bold text-on-surface text-sm">LKS Networking 2023</p>
+<p class="text-[10px] text-on-surface-variant">Regional • 1st Place</p>
+</div>
+<div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 hover:text-primary"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-1 hover:text-error"><span class="material-symbols-outlined text-lg">delete</span></button>
+<button class="p-1 cursor-grab"><span class="material-symbols-outlined text-lg">drag_indicator</span></button>
+</div>
+</div>
+<!-- Achievement Item -->
+<div class="flex items-center gap-4 p-3 bg-surface-container-lowest rounded-xl border border-outline-variant group hover:border-secondary/40 transition-all">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">military_tech</span>
+</div>
+<div class="flex-1">
+<p class="font-bold text-on-surface text-sm">Cisco NetAcad Elite</p>
+<p class="text-[10px] text-on-surface-variant">International • Excellence</p>
+</div>
+<div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 hover:text-primary"><span class="material-symbols-outlined text-lg">edit</span></button>
+<button class="p-1 hover:text-error"><span class="material-symbols-outlined text-lg">delete</span></button>
+<button class="p-1 cursor-grab"><span class="material-symbols-outlined text-lg">drag_indicator</span></button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Terminal-style Status Log -->
+<section class="mt-12 glass-card rounded-2xl p-6 border-l-4 border-l-secondary">
+<div class="flex items-center justify-between mb-4">
+<div class="flex items-center gap-2">
+<span class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
+</span>
+<h4 class="font-code-sm text-code-sm text-secondary uppercase font-bold tracking-widest">System Event Log</h4>
+</div>
+<span class="text-[10px] font-code-sm text-outline">v2.4.0-STABLE</span>
+</div>
+<div class="bg-surface-container-lowest rounded-lg p-4 font-code-sm text-code-sm space-y-2 text-on-surface-variant overflow-x-auto">
+<p><span class="text-secondary">[14:22:01]</span> Admin logged in from 192.168.1.45</p>
+<p><span class="text-secondary">[14:35:12]</span> Updated gallery index: 3 items synced to cloud storage.</p>
+<p><span class="text-secondary">[14:48:55]</span> Achievement record 'Cisco NetAcad' modified by root.</p>
+<p class="animate-pulse"><span class="text-primary">[SYSTEM]</span> Ready for new input...</p>
+</div>
+</section>
+</main>
+<!-- Micro-interaction Scripts -->
+<script>
+        document.querySelectorAll('.glass-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                // Subtle lift or scale if desired, currently handled by CSS
+            });
+        });
+
+        // Simple Toggle interaction for visibility
+        const toggle = document.querySelector('input[type="checkbox"]');
+        toggle.addEventListener('change', (e) => {
+            const status = e.target.checked ? 'LIVE' : 'HIDDEN';
+            console.log(`Site Visibility: ${status}`);
+            // Logic to trigger UI alerts could go here
+        });
+    </script>
+</body></html>

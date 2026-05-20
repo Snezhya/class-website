@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>XI TJKT 1 - Member Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;family=Geist:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#adc6ff",
+                      "surface-tint": "#adc6ff",
+                      "outline-variant": "#424754",
+                      "surface": "#0b1326",
+                      "tertiary-fixed": "#ffd8e7",
+                      "tertiary": "#ffafd3",
+                      "on-tertiary-container": "#560038",
+                      "surface-container-highest": "#2d3449",
+                      "on-primary-fixed-variant": "#004395",
+                      "on-primary-container": "#00285d",
+                      "tertiary-fixed-dim": "#ffafd3",
+                      "outline": "#8c909f",
+                      "secondary-fixed": "#acedff",
+                      "on-error-container": "#ffdad6",
+                      "error-container": "#93000a",
+                      "surface-dim": "#0b1326",
+                      "secondary": "#4cd7f6",
+                      "on-surface-variant": "#c2c6d6",
+                      "on-secondary-fixed": "#001f26",
+                      "on-background": "#dae2fd",
+                      "surface-container-lowest": "#060e20",
+                      "on-error": "#690005",
+                      "error": "#ffb4ab",
+                      "on-surface": "#dae2fd",
+                      "on-secondary": "#003640",
+                      "on-tertiary-fixed-variant": "#85145a",
+                      "tertiary-container": "#e364a7",
+                      "on-secondary-fixed-variant": "#004e5c",
+                      "on-primary-fixed": "#001a42",
+                      "on-primary": "#002e6a",
+                      "primary-container": "#4d8eff",
+                      "on-secondary-container": "#00424e",
+                      "primary": "#adc6ff",
+                      "on-tertiary-fixed": "#3d0026",
+                      "inverse-primary": "#005ac2",
+                      "surface-container-low": "#131b2e",
+                      "surface-container-high": "#222a3d",
+                      "on-tertiary": "#620040",
+                      "background": "#0b1326",
+                      "surface-container": "#171f33",
+                      "surface-variant": "#2d3449",
+                      "surface-bright": "#31394d",
+                      "inverse-on-surface": "#283044",
+                      "secondary-container": "#03b5d3",
+                      "inverse-surface": "#dae2fd",
+                      "primary-fixed": "#d8e2ff",
+                      "secondary-fixed-dim": "#4cd7f6"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "unit-12": "3rem",
+                      "gutter": "24px",
+                      "base": "4px",
+                      "unit-1": "0.25rem",
+                      "unit-8": "2rem",
+                      "unit-4": "1rem",
+                      "unit-2": "0.5rem",
+                      "container-max": "1280px"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Inter"],
+                      "headline-xl": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "code-sm": ["JetBrains Mono"],
+                      "body-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "label-md": ["Geist"],
+                      "headline-lg-mobile": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                      "headline-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                      "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                      "code-sm": ["13px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(11, 19, 38, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glow-cyan:focus {
+            border-bottom-color: #4cd7f6;
+            box-shadow: 0 4px 12px -4px rgba(76, 215, 246, 0.4);
+        }
+        .gradient-btn {
+            background: linear-gradient(45deg, #005ac2, #4cd7f6);
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .gradient-btn:hover {
+            transform: scale(1.02);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b1326;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2d3449;
+            border-radius: 10px;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary/30">
+<!-- SIDE NAVIGATION BAR (As per JSON) -->
+<nav class="h-screen w-64 fixed left-0 top-0 border-r border-outline-variant dark:border-outline-variant bg-surface dark:bg-surface flex flex-col py-unit-4 px-unit-2 z-50">
+<div class="mb-unit-8 px-unit-4">
+<h1 class="font-headline-md text-headline-md font-bold text-on-surface dark:text-on-surface">XI TJKT 1</h1>
+<p class="text-label-md font-label-md text-on-surface-variant">Admin Console</p>
+</div>
+<div class="flex-grow space-y-1">
+<!-- Navigation Items mapped from JSON -->
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-primary dark:text-primary bg-primary-container/10 dark:bg-primary-container/10 font-bold transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-body-md">Members</span>
+</a>
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="collections">collections</span>
+<span class="font-body-md">Gallery</span>
+</a>
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="workspace_premium">workspace_premium</span>
+<span class="font-body-md">Achievements</span>
+</a>
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="view_quilt">view_quilt</span>
+<span class="font-body-md">Hero Section</span>
+</a>
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="wallpaper">wallpaper</span>
+<span class="font-body-md">Background</span>
+</a>
+<a class="flex items-center gap-3 px-unit-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-container-highest transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="insights">insights</span>
+<span class="font-body-md">Statistics</span>
+</a>
+</div>
+<div class="mt-auto px-unit-2">
+<button class="w-full py-3 rounded-xl gradient-btn text-white font-bold flex items-center justify-center gap-2">
+<span class="material-symbols-outlined" data-icon="system_update">system_update</span>
+                New Update
+            </button>
+</div>
+</nav>
+<!-- MAIN CANVAS -->
+<main class="ml-64 min-h-screen">
+<!-- TOP APP BAR (As per JSON) -->
+<header class="sticky top-0 z-40 flex justify-between items-center h-16 px-gutter bg-surface/60 backdrop-blur-md border-b border-outline-variant">
+<div class="flex items-center gap-unit-4 w-1/3">
+<div class="relative w-full max-w-sm">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-outline" data-icon="search">search</span>
+<input class="w-full bg-surface-container-low border-none rounded-full py-2 pl-10 pr-4 text-label-md focus:ring-1 focus:ring-primary" placeholder="Search members..." type="text"/>
+</div>
+</div>
+<h2 class="font-black text-headline-sm text-on-surface">Admin Dashboard</h2>
+<div class="flex items-center gap-4">
+<button class="p-2 hover:text-primary transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-2 hover:text-primary transition-all duration-200">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-primary-fixed-dim">
+<img alt="Administrator Profile" data-alt="A professional headshot of a young tech administrator in a dark studio setting. He is wearing a sleek navy blue polo shirt. The lighting is low-key with a subtle blue neon glow reflecting on his face, evoking a high-tech cybersecurity expert vibe. The background is a blurred server room with blinking blue LEDs." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZ3IML05zXp4HbPkrXHTJ4Y_hJVNj_vhECMiuasn6Jatg1uOxGn-w5IYisl5rlrVCROInknjGEHN6EFkmSvdfCNhVHBSolwQXSJgcuY0Lc2ZUCXbJaXhCgMQj4bosUM26I0IiOTSd6ab92e5CH2AGPn-lECwNaRlIrYwF67A__x7XwKhjHavvLUGbwsBeS1O6cBudR1S_xedEeisuGrKD61nOlLwN2flvD5otmDcIDDbvG9Tc4NhDpmAPVM1U-tkKFv-Y8_-g0pdbY"/>
+</div>
+</div>
+</header>
+<!-- CONTENT SECTION -->
+<section class="p-gutter max-w-container-max mx-auto space-y-8">
+<!-- HEADER & ACTION -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div class="space-y-1">
+<h3 class="font-headline-lg text-headline-lg">Member Directory</h3>
+<p class="text-on-surface-variant">Manage the list of Computer and Telecommunication Network students.</p>
+</div>
+<button class="gradient-btn text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2" onclick="document.getElementById('member-modal').classList.remove('hidden')">
+<span class="material-symbols-outlined" data-icon="person_add">person_add</span>
+                    Add New Member
+                </button>
+</div>
+<!-- BENTO STATS -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="glass-panel p-unit-4 rounded-2xl flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-secondary" data-icon="group">group</span>
+<span class="text-code-sm font-code-sm bg-secondary/10 text-secondary px-2 py-0.5 rounded-full">+2 this week</span>
+</div>
+<div class="mt-4">
+<span class="text-headline-md font-headline-md">32</span>
+<p class="text-label-md text-on-surface-variant uppercase">Total Members</p>
+</div>
+</div>
+<div class="glass-panel p-unit-4 rounded-2xl flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-primary" data-icon="router">router</span>
+</div>
+<div class="mt-4">
+<span class="text-headline-md font-headline-md">14</span>
+<p class="text-label-md text-on-surface-variant uppercase">Network Certified</p>
+</div>
+</div>
+<div class="glass-panel p-unit-4 rounded-2xl flex flex-col justify-between">
+<div class="flex justify-between items-start">
+<span class="material-symbols-outlined text-tertiary" data-icon="terminal">terminal</span>
+</div>
+<div class="mt-4">
+<span class="text-headline-md font-headline-md">18</span>
+<p class="text-label-md text-on-surface-variant uppercase">Code Specialists</p>
+</div>
+</div>
+<div class="glass-panel p-unit-4 rounded-2xl border-primary-container/20 border">
+<div class="flex items-center gap-2 mb-2">
+<span class="relative flex h-3 w-3">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
+</span>
+<span class="text-label-md font-bold text-secondary">SYSTEM STATUS</span>
+</div>
+<p class="text-code-sm opacity-80">Link: ACTIVE<br/>Load: 12%<br/>Latency: 24ms</p>
+</div>
+</div>
+<!-- DATA TABLE -->
+<div class="glass-panel rounded-2xl overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high/50 text-label-md text-on-surface-variant border-b border-outline-variant">
+<th class="px-gutter py-4 font-bold uppercase tracking-wider">Member</th>
+<th class="px-gutter py-4 font-bold uppercase tracking-wider">Role</th>
+<th class="px-gutter py-4 font-bold uppercase tracking-wider">Specialty</th>
+<th class="px-gutter py-4 font-bold uppercase tracking-wider">Status</th>
+<th class="px-gutter py-4 font-bold uppercase tracking-wider text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-gutter py-4">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 rounded-full overflow-hidden bg-surface-container-highest">
+<img alt="Member" data-alt="A portrait of a male student with short dark hair, wearing a high-tech charcoal grey utility jacket. The background is a clean, futuristic laboratory with soft blue ambient lighting and holographic displays blurred in the distance. The overall aesthetic is professional, modern, and aligned with computer engineering." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXm_XKN_ZBq78YbHa22vK5t84uYeERiX7nx9avaZCIF9R4ScL2OSk-b6r3qygbL-60yJMJeItpq_b_J-ER8j4g_WVIlK-UN3ln_3kHrVjJ7L4GokrrU_wOYmvugUdpP3ucZmM_jrLi1uh0uOXkHBU2RAuZQbn1HKtiVIHVBZfiH6PEDLlKXPDb8JoGkKPOcFCeXhtXw5BextqasPsNa8n7i3Al82yvHTmFNl9DABE-4pZ4llWkkyahLJe6HKORDGz31iPeLpatryS4"/>
+</div>
+<div>
+<p class="font-bold text-on-surface">Arya Wijaya</p>
+<p class="text-code-sm text-outline">arya.w@xi-tjkt.edu</p>
+</div>
+</div>
+</td>
+<td class="px-gutter py-4">
+<span class="text-label-md bg-primary/10 text-primary-fixed-dim px-2 py-1 rounded border border-primary/20 font-medium">Class Leader</span>
+</td>
+<td class="px-gutter py-4">
+<span class="text-code-sm font-code-sm text-secondary">Cisco / CCNA</span>
+</td>
+<td class="px-gutter py-4">
+<div class="flex items-center gap-2">
+<div class="h-2 w-2 rounded-full bg-secondary shadow-[0_0_8px_#4cd7f6]"></div>
+<span class="text-label-md">Live</span>
+</div>
+</td>
+<td class="px-gutter py-4 text-right">
+<div class="flex justify-end gap-2">
+<button class="p-2 hover:bg-surface-container-highest rounded-lg transition-colors"><span class="material-symbols-outlined text-outline" data-icon="edit">edit</span></button>
+<button class="p-2 hover:bg-error/10 hover:text-error rounded-lg transition-colors"><span class="material-symbols-outlined" data-icon="delete">delete</span></button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-white/5 transition-colors">
+<td class="px-gutter py-4">
+<div class="flex items-center gap-3">
+<div class="h-10 w-10 rounded-full overflow-hidden bg-surface-container-highest">
+<img alt="Member" data-alt="A close-up portrait of a female student with a confident smile, wearing glasses and a tech-style minimalist hoodie. Behind her, a matrix of digital networking diagrams and fiber optic lights creates a sophisticated, high-tech bokeh effect. The palette is dominated by deep blues and vibrant cyans." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBXG8dR2AlN04SwO8Fo3Joz445RK1o1X7W-VFFl58LHwpd_cyU119vNOvxPTst3sWPU7mfFWCKGyiNtZaphtCafS0Ww299oJuoZalV-klT3GVy3CTanWZp7lmfEuS28jUzVSR0K_tgsAzgxo5pDFQv83ENI4Wt1ZT30tS79LCX4m9MzGDq3JiAiSu6wTcP_x-UGYko1JEOAYWgcQjZ33EH8OopldVsTtBGbnUDmsn6lXydN3KvakzILFnUMYfox31jsd9XJJaEWc-B"/>
+</div>
+<div>
+<p class="font-bold text-on-surface">Siti Rahma</p>
+<p class="text-code-sm text-outline">siti.r@xi-tjkt.edu</p>
+</div>
+</div>
+</td>
+<td class="px-gutter py-4">
+<span class="text-label-md bg-surface-variant text-on-surface-variant px-2 py-1 rounded font-medium">Secretary</span>
+</td>
+<td class="px-gutter py-4">
+<span class="text-code-sm font-code-sm text-secondary">SysAdmin / Linux</span>
+</td>
+<td class="px-gutter py-4">
+<div class="flex items-center gap-2">
+<div class="h-2 w-2 rounded-full bg-outline-variant"></div>
+<span class="text-label-md">Hidden</span>
+</div>
+</td>
+<td class="px-gutter py-4 text-right">
+<div class="flex justify-end gap-2">
+<button class="p-2 hover:bg-surface-container-highest rounded-lg transition-colors"><span class="material-symbols-outlined text-outline" data-icon="edit">edit</span></button>
+<button class="p-2 hover:bg-error/10 hover:text-error rounded-lg transition-colors"><span class="material-symbols-outlined" data-icon="delete">delete</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 flex items-center justify-between border-t border-outline-variant/30">
+<p class="text-label-md text-on-surface-variant">Showing 1-10 of 32 members</p>
+<div class="flex gap-2">
+<button class="p-2 glass-panel rounded-lg hover:bg-primary-container/20 transition-all"><span class="material-symbols-outlined" data-icon="chevron_left">chevron_left</span></button>
+<button class="p-2 glass-panel rounded-lg hover:bg-primary-container/20 transition-all"><span class="material-symbols-outlined" data-icon="chevron_right">chevron_right</span></button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- MODAL: ADD MEMBER (Hidden by default) -->
+<div class="hidden fixed inset-0 z-[60] flex items-center justify-center p-gutter bg-background/80 backdrop-blur-sm" id="member-modal">
+<div class="glass-panel w-full max-w-2xl rounded-2xl overflow-hidden shadow-2xl animate-[scale-up_0.3s_ease-out]">
+<div class="p-gutter border-b border-outline-variant flex justify-between items-center">
+<h4 class="font-headline-md text-headline-md">Add New Member</h4>
+<button class="p-2 hover:bg-surface-container-highest rounded-full transition-colors" onclick="document.getElementById('member-modal').classList.add('hidden')">
+<span class="material-symbols-outlined" data-icon="close">close</span>
+</button>
+</div>
+<form class="p-gutter space-y-6">
+<!-- Profile Upload Area -->
+<div class="flex items-center gap-6">
+<div class="h-24 w-24 rounded-2xl border-2 border-dashed border-outline-variant flex flex-col items-center justify-center text-outline hover:border-primary hover:text-primary transition-all cursor-pointer">
+<span class="material-symbols-outlined text-3xl" data-icon="add_a_photo">add_a_photo</span>
+<span class="text-[10px] font-bold uppercase mt-1">Upload</span>
+</div>
+<div class="flex-1 space-y-1">
+<p class="font-bold text-on-surface">Profile Identity</p>
+<p class="text-label-md text-on-surface-variant">Recommended: Square PNG/JPG under 2MB.</p>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Form Fields -->
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Full Name</label>
+<input class="w-full bg-surface-container-lowest border-0 border-b-2 border-outline-variant glow-cyan p-3 text-body-md focus:ring-0" placeholder="e.g. John Doe" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Academic Role</label>
+<select class="w-full bg-surface-container-lowest border-0 border-b-2 border-outline-variant glow-cyan p-3 text-body-md focus:ring-0 appearance-none">
+<option>Student</option>
+<option>Class Leader</option>
+<option>Secretary</option>
+<option>Treasurer</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Technical Specialty</label>
+<input class="w-full bg-surface-container-lowest border-0 border-b-2 border-outline-variant glow-cyan p-3 text-body-md focus:ring-0" placeholder="e.g. Fiber Optics, Cloud" type="text"/>
+</div>
+<div class="flex flex-col justify-end pb-1">
+<div class="flex items-center justify-between p-3 bg-surface-container-low rounded-lg">
+<span class="font-label-md text-on-surface">Show on Website</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-container-highest peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-secondary"></div>
+</label>
+</div>
+</div>
+</div>
+<div class="flex justify-end gap-4 pt-4">
+<button class="px-6 py-3 font-bold text-on-surface-variant hover:text-on-surface transition-colors" onclick="document.getElementById('member-modal').classList.add('hidden')" type="button">Cancel</button>
+<button class="gradient-btn px-8 py-3 rounded-xl font-bold text-white shadow-lg" type="submit">Save Member Data</button>
+</div>
+</form>
+</div>
+</div>
+<!-- TERMINAL SNACKBAR (Floating feedback) -->
+<div class="fixed bottom-gutter right-gutter z-50 glass-panel p-4 rounded-xl border-secondary/30 hidden animate-[slide-in_0.3s_ease-out]" id="terminal-feedback">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" data-icon="check_circle" data-weight="fill">check_circle</span>
+<div>
+<p class="font-code-sm text-code-sm text-on-surface">DATABASE_COMMIT: SUCCESS</p>
+<p class="text-[11px] font-code-sm text-outline">Operation completed in 154ms</p>
+</div>
+</div>
+</div>
+<script>
+        // Micro-interactions and Animation triggers
+        document.querySelector('form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const modal = document.getElementById('member-modal');
+            const snackbar = document.getElementById('terminal-feedback');
+            
+            modal.classList.add('hidden');
+            snackbar.classList.remove('hidden');
+            
+            setTimeout(() => {
+                snackbar.classList.add('hidden');
+            }, 3000);
+        });
+
+        // Keyframe animations via style injection
+        const styleSheet = document.createElement("style");
+        styleSheet.innerText = `
+            @keyframes scale-up {
+                from { transform: scale(0.95); opacity: 0; }
+                to { transform: scale(1); opacity: 1; }
+            }
+            @keyframes slide-in {
+                from { transform: translateY(20px); opacity: 0; }
+                to { transform: translateY(0); opacity: 1; }
+            }
+        `;
+        document.head.appendChild(styleSheet);
+    </script>
+</body></html>

@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+
+@layer base {
+  body {
+    @apply bg-brand-950 text-slate-300 font-sans antialiased overflow-x-hidden selection:bg-brand-500/30 selection:text-white;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display text-white tracking-tight;
+  }
+
+  code, pre, .terminal-text {
+    @apply font-mono;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-brand-950;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-brand-800 rounded-full hover:bg-brand-700 transition-colors;
+}
+
+/* Dot Matrix Background */
+.bg-dot-matrix {
+  background-image: radial-gradient(rgba(59, 130, 246, 0.15) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+/* Grid Background */
+.bg-grid-matrix {
+  background-image: 
+    linear-gradient(to right, rgba(59, 130, 246, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(59, 130, 246, 0.05) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  @apply bg-brand-900/70 border border-brand-800/80 shadow-2xl backdrop-blur-md;
+}
+
+.glass-card {
+  @apply bg-brand-800/40 border border-brand-700/50 hover:border-brand-500/40 transition-all duration-300;
+}
+
+/* Custom glow effect */
+.glow-accent {
+  box-shadow: 0 0 40px -10px rgba(59, 130, 246, 0.3);
+}
+
+/* Page transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.page-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 300ms, transform 300ms;
+}

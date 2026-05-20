@@ -1,0 +1,85 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+.vite/
+dist-ssr/
+out/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment variables
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+!.env.example
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# IDE & Editor files
+.vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+
+# Cache files
+.cache/
+.parcel-cache/
+.eslintcache
+.yarn-cache/
+.node-gyp/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Coverage & testing
+coverage/
+.nyc_output/
+htmlcov/
+
+# Temporary files
+tmp/
+temp/
+/uploads/temp/
+/public/temp/
+
+# Local database/storage
+*.sqlite
+*.db
+
+# Generated files
+*.local
+
+# Runtime files
+*.pid
+*.seed
+*.pid.lock
+
+# Misc
+.vercel/
+.netlify/
+.serverless/

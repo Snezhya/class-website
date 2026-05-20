@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>XI TJKT 1 | Members &amp; Gallery</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=JetBrains+Mono&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<style>
+        @font-face {
+            font-family: 'Geist';
+            src: url('https://cdn.jsdelivr.net/npm/geist@1.0.0/dist/fonts/geist-sans/Geist-Medium.woff2') format('woff2');
+        }
+        
+        body {
+            background-color: #0b1326;
+            color: #dae2fd;
+            overflow-x: hidden;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .glass-card {
+            background: rgba(45, 52, 73, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(173, 198, 255, 0.4);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+        }
+
+        .glow-hover:hover {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Hide scrollbar for clean horizontal scroll */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 24px;
+        }
+
+        .terminal-text::before {
+            content: "> ";
+            color: #4cd7f6;
+        }
+
+        .terminal-header-font {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-surface-variant": "#c2c6d6",
+                      "on-tertiary-fixed": "#3d0026",
+                      "tertiary-container": "#e364a7",
+                      "inverse-on-surface": "#283044",
+                      "surface-dim": "#0b1326",
+                      "primary": "#adc6ff",
+                      "secondary-fixed": "#acedff",
+                      "tertiary-fixed": "#ffd8e7",
+                      "tertiary-fixed-dim": "#ffafd3",
+                      "secondary-container": "#03b5d3",
+                      "tertiary": "#ffafd3",
+                      "primary-container": "#4d8eff",
+                      "on-primary-fixed": "#001a42",
+                      "outline-variant": "#424754",
+                      "on-primary-container": "#00285d",
+                      "on-primary": "#002e6a",
+                      "inverse-primary": "#005ac2",
+                      "error-container": "#93000a",
+                      "on-secondary-fixed": "#001f26",
+                      "on-secondary": "#003640",
+                      "primary-fixed": "#d8e2ff",
+                      "inverse-surface": "#dae2fd",
+                      "surface-container-low": "#131b2e",
+                      "surface-container": "#171f33",
+                      "on-error": "#690005",
+                      "on-primary-fixed-variant": "#004395",
+                      "secondary-fixed-dim": "#4cd7f6",
+                      "on-error-container": "#ffdad6",
+                      "on-background": "#dae2fd",
+                      "surface-tint": "#adc6ff",
+                      "on-secondary-fixed-variant": "#004e5c",
+                      "on-tertiary-fixed-variant": "#85145a",
+                      "surface-container-lowest": "#060e20",
+                      "secondary": "#4cd7f6",
+                      "surface-bright": "#31394d",
+                      "primary-fixed-dim": "#adc6ff",
+                      "surface-container-highest": "#2d3449",
+                      "surface-container-high": "#222a3d",
+                      "outline": "#8c909f",
+                      "error": "#ffb4ab",
+                      "surface": "#0b1326",
+                      "on-secondary-container": "#00424e",
+                      "on-tertiary": "#620040",
+                      "on-tertiary-container": "#560038",
+                      "on-surface": "#dae2fd",
+                      "background": "#0b1326",
+                      "surface-variant": "#2d3449"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "base": "4px",
+                      "container-max": "1280px",
+                      "unit-1": "0.25rem",
+                      "gutter": "24px",
+                      "unit-8": "2rem",
+                      "unit-12": "3rem",
+                      "unit-4": "1rem",
+                      "unit-2": "0.5rem"
+              },
+              "fontFamily": {
+                      "headline-md": ["Inter"],
+                      "label-md": ["Geist"],
+                      "body-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "code-sm": ["JetBrains Mono"],
+                      "headline-lg": ["Inter"],
+                      "headline-lg-mobile": ["Inter"],
+                      "headline-xl": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                      "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                      "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "code-sm": ["13px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                      "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "700"}],
+                      "headline-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800"}]
+              }
+            },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background text-on-surface selection:bg-primary selection:text-on-primary">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 w-full z-50 bg-surface/60 backdrop-blur-xl border-b border-white/10 shadow-sm">
+<nav class="flex justify-between items-center px-gutter py-unit-4 max-w-container-max mx-auto h-16">
+<div class="font-headline-md text-headline-md font-bold text-primary">XI TJKT 1</div>
+<div class="hidden md:flex gap-unit-8">
+<a class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors duration-300" href="#">Home</a>
+<a class="font-label-md text-label-md uppercase tracking-wider text-primary border-b-2 border-primary pb-1" href="#">Gallery</a>
+<a class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors duration-300" href="#">Members</a>
+<a class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors duration-300" href="#">Academic</a>
+<a class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors duration-300" href="#">Admin</a>
+</div>
+<div class="flex items-center gap-unit-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2">
+<span class="material-symbols-outlined">search</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors p-2">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</nav>
+</header>
+<main class="pt-24">
+<!-- Hero Title -->
+<section class="max-w-container-max mx-auto px-gutter py-unit-12">
+<div class="text-center space-y-unit-4">
+<h1 class="font-headline-xl text-headline-xl text-primary mb-2 opacity-0 translate-y-4 reveal-main">Directory &amp; Archive</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto opacity-0 translate-y-4 reveal-main">
+                    Documenting the technical elite of the networking division. A collective of innovators, engineers, and visionaries shaping the future of connectivity.
+                </p>
+</div>
+</section>
+<!-- Members Grid Section -->
+<section class="max-w-container-max mx-auto px-gutter py-unit-12 overflow-hidden">
+<div class="flex items-center justify-between mb-unit-8">
+<h2 class="font-headline-lg text-headline-lg flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">groups</span>
+                    Class Members
+                </h2>
+<div class="font-code-sm text-code-sm text-secondary bg-secondary-container/10 px-unit-4 py-unit-2 rounded-full border border-secondary/20 shadow-sm">
+                    Total: 35 Packets Detected
+                </div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter" id="member-grid">
+<!-- Member Cards are generated via JS for clean repetition or manually added -->
+<!-- Card 1 -->
+<div class="member-card glass-card rounded-xl p-unit-4 group glow-hover shadow-lg">
+<div class="relative overflow-hidden rounded-lg aspect-square mb-unit-4">
+<img alt="Anime style portrait of Hu Tao from Genshin Impact" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3qNTxrACiXph9bdv1nlq_3wEQgvZ8N4ZP3qQQQcSNPNFuYidt9z9PChskLr-ZFTCrhuODufxq2-2a886NzGE6RLgFcplzr187FEDltM-O-hLoQ8a9TKOJERmrzOBMF54lSIgx8pZtjyQITHE95cl_2FLY7dmbLS_drxd1BiwbgV1DPaDO7CEiAr49TsEpMD-YAWA4ustr-IfXETPwimPizsoZxuu-stkoeILCiPDjWzIZAwL1ETNwJnXC7sOX9h7haUlO2GISx3Vx"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim to-transparent opacity-60"></div>
+<div class="absolute bottom-3 left-3">
+<span class="font-code-sm text-code-sm text-primary uppercase tracking-tighter">UID: 2024-001</span>
+</div>
+</div>
+<div class="space-y-1">
+<h3 class="font-headline-md text-headline-md text-on-surface">Alex Thompson</h3>
+<p class="font-body-md text-body-md text-on-surface-variant terminal-text">Network Specialist / Cybersecurity</p>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="member-card glass-card rounded-xl p-unit-4 group glow-hover shadow-lg">
+<div class="relative overflow-hidden rounded-lg aspect-square mb-unit-4">
+<img alt="Anime style portrait of Hu Tao from Genshin Impact" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3qNTxrACiXph9bdv1nlq_3wEQgvZ8N4ZP3qQQQcSNPNFuYidt9z9PChskLr-ZFTCrhuODufxq2-2a886NzGE6RLgFcplzr187FEDltM-O-hLoQ8a9TKOJERmrzOBMF54lSIgx8pZtjyQITHE95cl_2FLY7dmbLS_drxd1BiwbgV1DPaDO7CEiAr49TsEpMD-YAWA4ustr-IfXETPwimPizsoZxuu-stkoeILCiPDjWzIZAwL1ETNwJnXC7sOX9h7haUlO2GISx3Vx"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim to-transparent opacity-60"></div>
+<div class="absolute bottom-3 left-3">
+<span class="font-code-sm text-code-sm text-primary uppercase tracking-tighter">UID: 2024-002</span>
+</div>
+</div>
+<div class="space-y-1">
+<h3 class="font-headline-md text-headline-md text-on-surface">Sarah Chen</h3>
+<p class="font-body-md text-body-md text-on-surface-variant terminal-text">Frontend Arch / Networking UI</p>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="member-card glass-card rounded-xl p-unit-4 group glow-hover shadow-lg">
+<div class="relative overflow-hidden rounded-lg aspect-square mb-unit-4">
+<img alt="Anime style portrait of Hu Tao from Genshin Impact" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3qNTxrACiXph9bdv1nlq_3wEQgvZ8N4ZP3qQQQcSNPNFuYidt9z9PChskLr-ZFTCrhuODufxq2-2a886NzGE6RLgFcplzr187FEDltM-O-hLoQ8a9TKOJERmrzOBMF54lSIgx8pZtjyQITHE95cl_2FLY7dmbLS_drxd1BiwbgV1DPaDO7CEiAr49TsEpMD-YAWA4ustr-IfXETPwimPizsoZxuu-stkoeILCiPDjWzIZAwL1ETNwJnXC7sOX9h7haUlO2GISx3Vx"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim to-transparent opacity-60"></div>
+<div class="absolute bottom-3 left-3">
+<span class="font-code-sm text-code-sm text-primary uppercase tracking-tighter">UID: 2024-003</span>
+</div>
+</div>
+<div class="space-y-1">
+<h3 class="font-headline-md text-headline-md text-on-surface">Jordan Rivera</h3>
+<p class="font-body-md text-body-md text-on-surface-variant terminal-text">Cloud Infrastructure / DevOps</p>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="member-card glass-card rounded-xl p-unit-4 group glow-hover shadow-lg">
+<div class="relative overflow-hidden rounded-lg aspect-square mb-unit-4">
+<img alt="Anime style portrait of Hu Tao from Genshin Impact" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3qNTxrACiXph9bdv1nlq_3wEQgvZ8N4ZP3qQQQcSNPNFuYidt9z9PChskLr-ZFTCrhuODufxq2-2a886NzGE6RLgFcplzr187FEDltM-O-hLoQ8a9TKOJERmrzOBMF54lSIgx8pZtjyQITHE95cl_2FLY7dmbLS_drxd1BiwbgV1DPaDO7CEiAr49TsEpMD-YAWA4ustr-IfXETPwimPizsoZxuu-stkoeILCiPDjWzIZAwL1ETNwJnXC7sOX9h7haUlO2GISx3Vx"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim to-transparent opacity-60"></div>
+<div class="absolute bottom-3 left-3">
+<span class="font-code-sm text-code-sm text-primary uppercase tracking-tighter">UID: 2024-004</span>
+</div>
+</div>
+<div class="space-y-1">
+<h3 class="font-headline-md text-headline-md text-on-surface">Marcus Vance</h3>
+<p class="font-body-md text-body-md text-on-surface-variant terminal-text">SysAdmin / Wireless Protocols</p>
+</div>
+</div>
+<!-- Extra placeholder card -->
+<div class="member-card glass-card rounded-xl p-unit-4 group glow-hover shadow-lg hidden lg:block">
+<div class="relative overflow-hidden rounded-lg aspect-square mb-unit-4">
+<img alt="Anime style portrait of Hu Tao from Genshin Impact" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3qNTxrACiXph9bdv1nlq_3wEQgvZ8N4ZP3qQQQcSNPNFuYidt9z9PChskLr-ZFTCrhuODufxq2-2a886NzGE6RLgFcplzr187FEDltM-O-hLoQ8a9TKOJERmrzOBMF54lSIgx8pZtjyQITHE95cl_2FLY7dmbLS_drxd1BiwbgV1DPaDO7CEiAr49TsEpMD-YAWA4ustr-IfXETPwimPizsoZxuu-stkoeILCiPDjWzIZAwL1ETNwJnXC7sOX9h7haUlO2GISx3Vx"/>
+<div class="absolute bottom-3 left-3"><span class="font-code-sm text-code-sm text-primary uppercase">UID: 2024-005</span></div>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface">Elena Rodriguez</h3>
+<p class="font-body-md text-body-md text-on-surface-variant terminal-text">Fullstack / API Integration</p>
+</div>
+</div>
+</section>
+<!-- Achievement Highlights (Horizontal Scroll) -->
+<section class="py-unit-12 bg-surface-container-low overflow-hidden mt-unit-12" id="gallery-highlights">
+<div class="max-w-container-max mx-auto px-gutter mb-unit-8">
+<h2 class="font-headline-lg text-headline-lg text-primary flex items-center gap-3">
+<span class="material-symbols-outlined">emoji_events</span>
+                    Gallery Highlights
+                </h2>
+</div>
+<div class="horizontal-scroll-container flex gap-gutter px-gutter cursor-grab active:cursor-grabbing pb-unit-8 no-scrollbar">
+<!-- Highlight Card 1 -->
+<div class="flex-none w-[400px] h-[500px] glass-card rounded-xl overflow-hidden relative group shadow-xl">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="A high-quality close-up of a futuristic crystal trophy awarded for a networking competition." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCvq95JNPXL-QXsnxCcv3xmQQYRiAD6w-Lvh1KWWSti2rULvV5m-ot6NW_Mg0Q3AxAMKjyLWWeHsLokfeTBC7OVDSyh4J9GDGMY092RcB2Wi5iC48OfJfWDfnK2HtoRnps7GTiRUBlF2qLA6zzesgKAoozozTrFeGQA1R35_HcTPVlMX8x7KoJg8bL82ZuIztWTvmOP3sOcsbqhGNPHbFpzXGWVvmMmB1wzkLpHMLs47XqK2Kn2On1MwvikDc_kEwRfDHfi9d2sRUZj"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim/90 via-transparent to-transparent"></div>
+<div class="absolute bottom-0 p-unit-8 w-full">
+<span class="font-label-md text-label-md bg-secondary text-on-secondary px-unit-2 rounded mb-2 inline-block uppercase">1st Place</span>
+<h4 class="font-headline-md text-headline-md text-white">National Networking Competition</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">Achieved 99.9% uptime and zero latency in complex scenario simulation.</p>
+</div>
+</div>
+<!-- Highlight Card 2 -->
+<div class="flex-none w-[400px] h-[500px] glass-card rounded-xl overflow-hidden relative group shadow-xl">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="A dynamic action shot of a group of tech students working together in a high-tech lab." src="https://lh3.googleusercontent.com/aida-public/AB6AXuADkGRptxNhuD4orqUnbc_Qawh-XDWHlCJk8SZOq0myTWvRFgL4EOy5gVTY85P64Crv2cePCrT7LdIl5bEwtils9zl9aUOjhKsDmCW1-xAV_3wNFNsALnm2KgyAFTsMPjvtnLZrH3wtblLY_BldW3MmbPzKH1XsEo4r6FrmB9-SwM769O-mJKzMhpYEsryXTtTZW4EN6Yqk5kM8gWrOmhmoqWWV6FAjIZb53MFyhRi55uW6PI_ETKYt6hCk6fdHw5HRgM08IOrNVdUm"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim/90 via-transparent to-transparent"></div>
+<div class="absolute bottom-0 p-unit-8 w-full">
+<span class="font-label-md text-label-md bg-primary text-on-primary px-unit-2 rounded mb-2 inline-block uppercase">Event</span>
+<h4 class="font-headline-md text-headline-md text-white">Networking Hackathon 2024</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">Team XI TJKT 1 developed a decentralized node recovery algorithm.</p>
+</div>
+</div>
+<!-- Highlight Card 3 -->
+<div class="flex-none w-[400px] h-[500px] glass-card rounded-xl overflow-hidden relative group shadow-xl">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="A wide, cinematic shot of a modern, tech-focused university hall." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-XUyKuv7gOLodANbq7pQxq4JqLBewC8_bwUVKgUB04TkSLq5V42hvg44KvxcIAC8INduwVDFa8GNwEMx4sDjcSc68S2YOigwAwp0zJtt8kujfE9SjONOzufPd1CW_SBojsf-OGGGbNya_CRW23YEyEF5dTvTywLzHsGiMmsYm2wW_npOAMKqiwAtZXW3DpznA63x-hj659ZuQy81QqqazW7CSkvADb_bI1dJvF1hsM3-kU1uXdmEuwvmqEtwU9y6w3OJuN0civD6w"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface-dim/90 via-transparent to-transparent"></div>
+<div class="absolute bottom-0 p-unit-8 w-full">
+<span class="font-label-md text-label-md bg-tertiary text-on-tertiary px-unit-2 rounded mb-2 inline-block uppercase">Innovation</span>
+<h4 class="font-headline-md text-headline-md text-white">Class Tech Exhibition</h4>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">Showcasing fiber-optic routing protocols and cloud-native solutions.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Achievement Gallery (Masonry Layout) -->
+<section class="max-w-container-max mx-auto px-gutter py-unit-12">
+<div class="flex flex-col md:flex-row items-end justify-between mb-unit-12 gap-unit-4">
+<div class="space-y-unit-2 w-full">
+<div class="terminal-header-font text-secondary bg-surface-container-highest/30 p-4 rounded-lg border border-outline-variant/30 mb-unit-4 shadow-inner">
+<span class="text-green-400">user@xj-tjkt1</span>:<span class="text-primary">~/archive</span>$ <span class="text-on-surface">ls -la</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg flex items-center gap-3">
+<span class="material-symbols-outlined text-tertiary">photo_library</span>
+                        Archive Collection
+                    </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Visual history of competitions, lab sessions, and academic milestones.</p>
+</div>
+<div class="flex gap-unit-2 shrink-0">
+<button class="px-unit-4 py-unit-2 rounded-lg border border-outline font-label-md text-label-md hover:bg-surface-variant/50 transition-all">All Photos</button>
+<button class="px-unit-4 py-unit-2 rounded-lg border border-primary/20 text-primary bg-primary/10 font-label-md text-label-md hover:bg-primary/20 transition-all shadow-sm">Competitions</button>
+<button class="px-unit-4 py-unit-2 rounded-lg border border-outline font-label-md text-label-md hover:bg-surface-variant/50 transition-all">Lab Life</button>
+</div>
+</div>
+<div class="columns-1 md:columns-2 lg:columns-3 gap-unit-6 space-y-unit-6">
+<!-- Item 1 -->
+<div class="masonry-item relative group overflow-hidden rounded-xl glass-card cursor-pointer shadow-md hover:shadow-xl">
+<img class="w-full h-auto object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105" data-alt="A wide view of a modern tech competition stage." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1Rvg2RzO3ixyTC7TzkKk2AEJubu4n9kwNKKCiRFp1ZTYNlFxxdvWhklYOyDXN8bUP9IsRwEvPb5QHizEMUsrd8ZZDPPOrlXeM14TIABj25bWQ9vh5qxuqdPFLoVcJuwMWaC7S_rJehTy-mTvsTEVLL7BIkebEYuDHpWKVifCm3ydFeY7LZMT7nJjZXEbyzhmdWIPjq_Esugj8KXkQCYQmf0V4bAN3xzmV-QBeNUTP00O5pqC66rtJg5whPYXaAQ2LQ5QZuOBbBrRN"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-4xl">zoom_in</span>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="masonry-item relative group overflow-hidden rounded-xl glass-card cursor-pointer shadow-md hover:shadow-xl">
+<img class="w-full h-auto object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105" data-alt="A detailed shot of students collaborating on a networking diagram." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-SOgrSVSzsr7p5zqv03iUFk-Py9YRClGICIiFa3XzJhPMyiHmGDagw941DhLQoFgFY94UULS5B37YydnoAv1YPT6cf-5p_gpzFbApCrCXth3jVGfPzBKoqbDxE1HttUxYGQFJIOLNOvS6Q3NFf7EMlI544HLKAfXS1YBYos4-KlvXboNYMOaPRPwIe6oxxHwWUUrJ3Mv-7KmkwVdZwnoSLd4YmKBq3JWeZMw6eh8-frsjuxgeXm_0Z-oSBBPZNWyuW3nbG-yk-HjA"/>
+<div class="absolute inset-0 bg-secondary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-4xl">zoom_in</span>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="masonry-item relative group overflow-hidden rounded-xl glass-card cursor-pointer shadow-md hover:shadow-xl">
+<img class="w-full h-auto object-cover grayscale group-hover:grayscale-0 transition-all duration-500 group-hover:scale-105" data-alt="Macro photography of a high-speed data connection port." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD2BsT3YAC9L6Pb5FKYpSdFo7pO3ShGJ0IBsupBBrtBoPpBMVIJ_H5sJJ8IhbnnuT06dW_QI6t9dA7mdI-MS8IzOqt1t7FZdvCQQESOZESGACnh5gzx03NZRDgHi8pZDQ-nSUTcPIbEjDkkkk7qcbNspJgn_SR8DoBY-8ZzhB3y3cahizijDeXy1DCJAMZBErKQRdH7rBbZCF8M0nTLyL50iqkxotT_9ab19O_vC9-0fjcVAbKGgpcoTPuQgg2GliE1kT51MRucKuTi"/>
+<div class="absolute inset-0 bg-tertiary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-4xl">zoom_in</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer Component -->
+<footer class="w-full bg-surface-container-lowest border-t border-outline-variant/30 mt-unit-12">
+<div class="flex flex-col md:flex-row justify-between items-center px-gutter py-unit-12 max-w-container-max mx-auto">
+<div class="mb-unit-8 md:mb-0 space-y-unit-2">
+<div class="font-headline-md text-headline-md text-primary">XI TJKT 1</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-xs">© 2024 XI TJKT 1. Advanced Networking Excellence.</p>
+</div>
+<div class="flex flex-col items-center md:items-end gap-unit-4">
+<div class="flex gap-unit-6">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-secondary transition-colors opacity-80 hover:opacity-100" href="#">Privacy Policy</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-secondary transition-colors opacity-80 hover:opacity-100" href="#">Contact Support</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-secondary transition-colors opacity-80 hover:opacity-100" href="#">Class Rules</a>
+</div>
+<div class="flex gap-unit-4">
+<button class="w-10 h-10 rounded-full flex items-center justify-center border border-outline-variant hover:border-primary transition-all group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary">language</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center border border-outline-variant hover:border-primary transition-all group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary">hub</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center border border-outline-variant hover:border-primary transition-all group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary">terminal</span>
+</button>
+</div>
+</div>
+</div>
+</footer>
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            gsap.registerPlugin(ScrollTrigger);
+
+            // Staggered Reveal for main text
+            gsap.to('.reveal-main', {
+                opacity: 1,
+                y: 0,
+                duration: 1,
+                stagger: 0.2,
+                ease: "power3.out"
+            });
+
+            // Member Cards Staggered Animation
+            gsap.from('.member-card', {
+                scrollTrigger: {
+                    trigger: '#member-grid',
+                    start: 'top 80%'
+                },
+                opacity: 0,
+                scale: 0.95,
+                y: 30,
+                duration: 0.8,
+                stagger: 0.1,
+                ease: "power3.out"
+            });
+
+            // Hover lift effect for member cards
+            const cards = document.querySelectorAll('.member-card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    gsap.to(card, {
+                        y: -8,
+                        duration: 0.3,
+                        ease: "power2.out"
+                    });
+                });
+                card.addEventListener('mouseleave', () => {
+                    gsap.to(card, {
+                        y: 0,
+                        duration: 0.3,
+                        ease: "power2.out"
+                    });
+                });
+            });
+
+            // Horizontal Scroll for Highlights
+            const highlightContainer = document.querySelector('.horizontal-scroll-container');
+            
+            // Basic touch/drag scroll for mobile/desktop
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            highlightContainer.addEventListener('mousedown', (e) => {
+                isDown = true;
+                highlightContainer.classList.add('active');
+                startX = e.pageX - highlightContainer.offsetLeft;
+                scrollLeft = highlightContainer.scrollLeft;
+            });
+            highlightContainer.addEventListener('mouseleave', () => {
+                isDown = false;
+            });
+            highlightContainer.addEventListener('mouseup', () => {
+                isDown = false;
+            });
+            highlightContainer.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - highlightContainer.offsetLeft;
+                const walk = (x - startX) * 2;
+                highlightContainer.scrollLeft = scrollLeft - walk;
+            });
+
+            // ScrollTrigger for masonry items
+            gsap.utils.toArray('.masonry-item').forEach(item => {
+                gsap.from(item, {
+                    scrollTrigger: {
+                        trigger: item,
+                        start: 'top 95%'
+                    },
+                    opacity: 0,
+                    y: 20,
+                    duration: 0.6,
+                    ease: "power2.out"
+                });
+            });
+
+            // Atmospheric micro-interaction for the navigation
+            const navLinks = document.querySelectorAll('nav a');
+            navLinks.forEach(link => {
+                link.addEventListener('mouseenter', () => {
+                    gsap.to(link, {
+                        scale: 1.05,
+                        duration: 0.2,
+                        ease: "power1.out"
+                    });
+                });
+                link.addEventListener('mouseleave', () => {
+                    gsap.to(link, {
+                        scale: 1,
+                        duration: 0.2,
+                        ease: "power1.out"
+                    });
+                });
+            });
+        });
+    </script>
+</body></html>
