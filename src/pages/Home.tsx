@@ -6,7 +6,7 @@ import { Button } from '../components/ui/Button';
 import { ActivityLogs } from '../components/shared/ActivityLogs';
 import { 
   Terminal, Users, FileText, Image, 
-  Cpu, HardDrive, Wifi, Bell, ShieldCheck, ArrowRight, Clock
+  Wifi, Bell, ShieldCheck, ArrowRight, Clock
 } from 'lucide-react';
 import { animate } from 'animejs';
 import gsap from 'gsap';
@@ -63,6 +63,7 @@ export const Home: React.FC = () => {
   // System Monitor simulation
   const [cpuUsage, setCpuUsage] = React.useState(28);
   const [ramUsage, setRamUsage] = React.useState(42);
+  const [dbPing, setDbPing] = React.useState(48);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -73,6 +74,10 @@ export const Home: React.FC = () => {
       setRamUsage(prev => {
         const delta = Math.floor(Math.random() * 3) - 1; // -1 to +1
         return Math.min(Math.max(prev + delta, 38), 46);
+      });
+      setDbPing(prev => {
+        const delta = Math.floor(Math.random() * 11) - 5; // -5 to +5
+        return Math.min(Math.max(prev + delta, 25), 85);
       });
     }, 3000);
     return () => clearInterval(timer);
@@ -317,48 +322,113 @@ export const Home: React.FC = () => {
 
           {/* System Monitor Widget */}
           <Card title="Core Server Telemetry">
-            <div className="space-y-4 font-mono text-xs">
-              {/* CPU load */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-[11px] text-slate-400">
-                  <span className="flex items-center gap-1">
-                    <Cpu className="w-3.5 h-3.5 text-brand-400" />
-                    <span>CPU_UTILITY</span>
-                  </span>
-                  <span>{cpuUsage}%</span>
+            <div className="space-y-5 font-mono text-xs">
+              
+              {/* Circular Indicators Layout */}
+              <div className="grid grid-cols-3 gap-2 py-3 px-2 bg-brand-950/40 rounded-xl border border-brand-850">
+                {/* CPU Circle */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="relative w-16 h-16">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle
+                        cx="32"
+                        cy="32"
+                        r="26"
+                        className="stroke-brand-900 fill-none"
+                        strokeWidth="3.5"
+                      />
+                      <circle
+                        cx="32"
+                        cy="32"
+                        r="26"
+                        className="stroke-brand-500 fill-none transition-all duration-1000"
+                        strokeWidth="3.5"
+                        strokeDasharray={2 * Math.PI * 26}
+                        strokeDashoffset={2 * Math.PI * 26 - (cpuUsage / 100) * (2 * Math.PI * 26)}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
+                      {cpuUsage}%
+                    </div>
+                  </div>
+                  <span className="text-[9px] text-slate-400 font-bold tracking-wider">CPU_UTIL</span>
                 </div>
-                <div className="w-full bg-brand-950 rounded-full h-1.5 border border-brand-800">
-                  <div 
-                    className="bg-brand-500 h-1.5 rounded-full transition-all duration-1000" 
-                    style={{ width: `${cpuUsage}%` }}
-                  />
-                </div>
-              </div>
 
-              {/* Memory load */}
-              <div className="space-y-1">
-                <div className="flex justify-between text-[11px] text-slate-400">
-                  <span className="flex items-center gap-1">
-                    <HardDrive className="w-3.5 h-3.5 text-terminal-cyan" />
-                    <span>MEM_ALLOC</span>
-                  </span>
-                  <span>{ramUsage}% (3.4GB/8GB)</span>
+                {/* RAM Circle */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="relative w-16 h-16">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle
+                        cx="32"
+                        cy="32"
+                        r="26"
+                        className="stroke-brand-900 fill-none"
+                        strokeWidth="3.5"
+                      />
+                      <circle
+                        cx="32"
+                        cy="32"
+                        r="26"
+                        className="stroke-terminal-cyan fill-none transition-all duration-1000"
+                        strokeWidth="3.5"
+                        strokeDasharray={2 * Math.PI * 26}
+                        strokeDashoffset={2 * Math.PI * 26 - (ramUsage / 100) * (2 * Math.PI * 26)}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">
+                      {ramUsage}%
+                    </div>
+                  </div>
+                  <span className="text-[9px] text-slate-400 font-bold tracking-wider">MEM_ALLOC</span>
                 </div>
-                <div className="w-full bg-brand-950 rounded-full h-1.5 border border-brand-800">
-                  <div 
-                    className="bg-terminal-cyan h-1.5 rounded-full transition-all duration-1000" 
-                    style={{ width: `${ramUsage}%` }}
-                  />
+
+                {/* DB Latency Circle */}
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className="relative w-16 h-16">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle
+                        cx="32"
+                        cy="32"
+                        r="26"
+                        className="stroke-brand-900 fill-none"
+                        strokeWidth="3.5"
+                      />
+                      <circle
+                        cx="32"
+                        cy="32"
+                        r="26"
+                        className="stroke-terminal-green fill-none transition-all duration-1000"
+                        strokeWidth="3.5"
+                        strokeDasharray={2 * Math.PI * 26}
+                        strokeDashoffset={2 * Math.PI * 26 - (Math.min(dbPing, 100) / 100) * (2 * Math.PI * 26)}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-white">
+                      {dbPing}ms
+                    </div>
+                  </div>
+                  <span className="text-[9px] text-slate-400 font-bold tracking-wider">DB_LATENCY</span>
                 </div>
               </div>
 
               {/* Server Details */}
               <div className="pt-2 border-t border-brand-800/80 space-y-1 text-[10px] text-slate-500">
                 <div className="flex justify-between">
+                  <span>CLOUD BACKEND</span>
+                  <span className="text-terminal-green uppercase font-bold">SUPABASE CLOUD</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>DB REGION</span>
+                  <span>ap-southeast-1 (SG)</span>
+                </div>
+                <div className="flex justify-between">
                   <span>NETWORK LINK</span>
-                  <span className="text-terminal-green flex items-center gap-1">
+                  <span className="text-terminal-cyan flex items-center gap-1">
                     <Wifi className="w-3 h-3" />
-                    <span>GIGABIT_UP</span>
+                    <span>SECURE_HTTPS</span>
                   </span>
                 </div>
                 <div className="flex justify-between">
