@@ -46,7 +46,7 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 font-sans font-medium transition-all duration-200 select-none active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none ${getVariantStyles()} ${getSizeStyles()} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 font-sans font-medium transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] select-none active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none ${getVariantStyles()} ${getSizeStyles()} ${className}`}
       disabled={disabled}
       {...props}
     >

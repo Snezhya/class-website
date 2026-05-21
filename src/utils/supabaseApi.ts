@@ -4,6 +4,7 @@ import {
   type GalleryAlbum, type GalleryPhoto,
   type SystemSettings, defaultSettings,
 } from '../data/initialData';
+import { ensureMembersHaveAbsen } from './attendance';
 
 // ============================================================
 // STORAGE (semua foto)
@@ -54,7 +55,12 @@ export const mapDbToMember = (dbRow: any): Member => ({
   status: (dbRow.status as 'active' | 'away' | 'offline') || 'offline',
   image: dbRow.photo || defaultSettings.logoPlaceholder,
   order: dbRow.sort_order || 0,
-  absen: dbRow.absen_number ?? dbRow.sort_order ?? 0,
+  absen:
+    typeof dbRow.absen_number === 'number' && dbRow.absen_number > 0
+      ? dbRow.absen_number
+      : dbRow.sort_order > 0
+        ? dbRow.sort_order
+        : 0,
 });
 
 export const mapMemberToDb = (member: Omit<Member, 'id'>) => ({
@@ -72,13 +78,26 @@ export const mapMemberToDb = (member: Omit<Member, 'id'>) => ({
 });
 
 export const fetchMembers = async (): Promise<Member[]> => {
-  const { data, error } = await supabase
+  const primary = await supabase
     .from('member')
     .select('*')
     .order('absen_number', { ascending: true })
     .order('sort_order', { ascending: true });
-  if (error) throw error;
-  return (data || []).map(mapDbToMember);
+
+  if (primary.error) {
+    const msg = primary.error.message || '';
+    if (/absen_number/i.test(msg)) {
+      const fallback = await supabase
+        .from('member')
+        .select('*')
+        .order('sort_order', { ascending: true });
+      if (fallback.error) throw fallback.error;
+      return ensureMembersHaveAbsen((fallback.data || []).map(mapDbToMember));
+    }
+    throw primary.error;
+  }
+
+  return ensureMembersHaveAbsen((primary.data || []).map(mapDbToMember));
 };
 
 export const addMemberDb = async (member: Omit<Member, 'id'>): Promise<Member> => {

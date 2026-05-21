@@ -4,7 +4,7 @@ import {
   initialMembers, initialTasks, initialSchedule, initialNotes, initialGallery, defaultSettings 
 } from '../data/initialData';
 import { storage } from '../utils/storage';
-import { getNextAbsenNumber, renumberAbsenList } from '../utils/attendance';
+import { ensureMembersHaveAbsen, getNextAbsenNumber, renumberAbsenList } from '../utils/attendance';
 import { supabase } from '../lib/supabase';
 import {
   fetchMembers, addMemberDb, editMemberDb, deleteMemberDb, mapDbToMember,
@@ -127,7 +127,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (!supabaseUrl || !supabaseAnonKey) {
       // Offline fallback: load everything from localStorage / initial data
-      setMembers(storage.get('members', initialMembers));
+      setMembers(ensureMembersHaveAbsen(storage.get('members', initialMembers)));
       setTasks(storage.get('tasks', initialTasks));
       setSchedules(storage.get('schedules', initialSchedule));
       setNotes(storage.get('notes', initialNotes));
@@ -147,7 +147,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       fetchSettings().catch(() => storage.get('settings', defaultSettings)),
       fetchActivityLogs().catch(() => storage.get('activity_logs', [])),
     ]).then(([mems, tsks, scheds, nts, gals, sets, logs]) => {
-      setMembers(mems); storage.set('members', mems);
+      const normalized = ensureMembersHaveAbsen(mems);
+      setMembers(normalized); storage.set('members', normalized);
       setTasks(tsks); storage.set('tasks', tsks);
       setSchedules(scheds); storage.set('schedules', scheds);
       setNotes(nts); storage.set('notes', nts);

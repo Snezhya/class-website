@@ -52,7 +52,7 @@
 }
 
 .glass-card {
-  @apply bg-brand-800/40 border border-brand-700/50 hover:border-brand-500/40 transition-all duration-300;
+  @apply bg-brand-800/40 border border-brand-700/50 hover:border-brand-500/40 transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)];
 }
 
 /* Custom glow effect */

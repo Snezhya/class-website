@@ -6,6 +6,8 @@ import { Button } from '../components/ui/Button';
 import { ActivityLogs } from '../components/shared/ActivityLogs';
 import { AttendanceMarquee } from '../components/attendance/AttendanceMarquee';
 import { MotionCard } from '../components/motion/MotionCard';
+import { FadeIn } from '../components/motion/FadeIn';
+import { StaggerReveal } from '../components/motion/StaggerReveal';
 import { 
   Terminal, Users, FileText, Image, 
   Wifi, Bell, ShieldCheck, ArrowRight, Clock, ClipboardList
@@ -70,7 +72,7 @@ export const Home: React.FC = () => {
   return (
     <div className="space-y-10">
       {settings.showHero && (
-        <section className="relative overflow-hidden rounded-2xl glass-panel p-8 md:p-12 border border-brand-800/80 bg-brand-900/60 shadow-2xl">
+        <FadeIn as="section" className="relative overflow-hidden rounded-2xl glass-panel p-8 md:p-12 border border-brand-800/80 bg-brand-900/60 shadow-2xl">
           <div className="absolute top-0 right-0 p-4 font-mono text-[10px] text-slate-600 hidden md:block">
             STATION_ID: SMKN1BYL-XI-TJKT-1
           </div>
@@ -132,13 +134,13 @@ export const Home: React.FC = () => {
               </div>
             </div>
           </div>
-        </section>
+        </FadeIn>
       )}
 
-      {/* 2. Statistical Cards (Anime.js Count-Up) */}
+      {/* 2. Statistical Cards */}
       {settings.showStats && (
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <MotionCard className="flex items-center gap-4 relative overflow-hidden group bg-brand-800/40 border border-brand-700/50 rounded-xl shadow-lg p-5">
+        <StaggerReveal as="section" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" inView={false}>
+          <MotionCard stagger className="flex items-center gap-4 relative overflow-hidden group bg-brand-800/40 border border-brand-700/50 rounded-xl shadow-lg p-5">
             <div className="p-3 rounded-lg bg-brand-800 border border-brand-700/60 text-brand-400 group-hover:border-brand-500/40 transition-colors">
               <Users className="w-6 h-6" />
             </div>
@@ -148,7 +150,7 @@ export const Home: React.FC = () => {
             </div>
           </MotionCard>
 
-          <MotionCard className="flex items-center gap-4 relative overflow-hidden group bg-brand-800/40 border border-brand-700/50 rounded-xl shadow-lg p-5">
+          <MotionCard stagger className="flex items-center gap-4 relative overflow-hidden group bg-brand-800/40 border border-brand-700/50 rounded-xl shadow-lg p-5">
             <div className="p-3 rounded-lg bg-brand-800 border border-brand-700/60 text-terminal-green group-hover:border-terminal-green/40 transition-colors">
               <FileText className="w-6 h-6" />
             </div>
@@ -160,7 +162,7 @@ export const Home: React.FC = () => {
             </div>
           </MotionCard>
 
-          <MotionCard className="flex items-center gap-4 relative overflow-hidden group bg-brand-800/40 border border-brand-700/50 rounded-xl shadow-lg p-5">
+          <MotionCard stagger className="flex items-center gap-4 relative overflow-hidden group bg-brand-800/40 border border-brand-700/50 rounded-xl shadow-lg p-5">
             <div className="p-3 rounded-lg bg-brand-800 border border-brand-700/60 text-terminal-cyan group-hover:border-terminal-cyan/40 transition-colors">
               <Image className="w-6 h-6" />
             </div>
@@ -170,7 +172,7 @@ export const Home: React.FC = () => {
             </div>
           </MotionCard>
 
-          <MotionCard className="flex items-center gap-4 relative overflow-hidden group bg-brand-800/40 border border-brand-700/50 rounded-xl shadow-lg p-5">
+          <MotionCard stagger className="flex items-center gap-4 relative overflow-hidden group bg-brand-800/40 border border-brand-700/50 rounded-xl shadow-lg p-5">
             <div className="p-3 rounded-lg bg-brand-800 border border-brand-700/60 text-terminal-yellow group-hover:border-terminal-yellow/40 transition-colors">
               <ShieldCheck className="w-6 h-6" />
             </div>
@@ -182,11 +184,11 @@ export const Home: React.FC = () => {
               </h3>
             </div>
           </MotionCard>
-        </section>
+        </StaggerReveal>
       )}
 
       {settings.showAttendancePreview && members.length > 0 && (
-        <section className="space-y-3">
+        <FadeIn as="section" className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <ClipboardList className="w-4 h-4 text-brand-400" />
@@ -200,10 +202,10 @@ export const Home: React.FC = () => {
             </Link>
           </div>
           <AttendanceMarquee />
-        </section>
+        </FadeIn>
       )}
 
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <FadeIn as="section" className="grid grid-cols-1 lg:grid-cols-3 gap-6" delay={0.06}>
         
         {/* Left Column: Announcements & Schedule Preview */}
         <div className="lg:col-span-2 space-y-6">
@@ -529,7 +531,7 @@ export const Home: React.FC = () => {
           {settings.showActivityLog && <ActivityLogs />}
           
         </div>
-      </section>
+      </FadeIn>
     </div>
   );
 };

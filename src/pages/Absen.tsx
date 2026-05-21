@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Card } from '../components/ui/Card';
 import { MotionCard } from '../components/motion/MotionCard';
-import { sortByAbsen } from '../utils/attendance';
+import { FadeIn } from '../components/motion/FadeIn';
+import { StaggerReveal } from '../components/motion/StaggerReveal';
+import { formatAbsen, sortByAbsen } from '../utils/attendance';
 import { ClipboardList, Users, Award } from 'lucide-react';
 
 export const Absen: React.FC = () => {
@@ -15,10 +17,11 @@ export const Absen: React.FC = () => {
   const renderCard = (m: (typeof sorted)[0]) => (
     <MotionCard
       key={m.id}
+      stagger
       className="flex items-center gap-3 p-3 rounded-xl border border-brand-800 bg-brand-900/30"
     >
       <span className="w-10 h-10 shrink-0 rounded-lg bg-brand-800 border border-brand-700 flex items-center justify-center font-mono font-bold text-lg text-brand-300">
-        {m.absen}
+        {formatAbsen(m)}
       </span>
       <img src={m.image} alt="" className="w-12 h-12 rounded-lg object-cover border border-brand-800 shrink-0" />
       <div className="min-w-0 flex-1">
@@ -30,6 +33,7 @@ export const Absen: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <FadeIn>
       <Card className="p-6 bg-gradient-to-r from-brand-900/60 to-brand-800/40 border border-brand-800">
         <div className="flex flex-col md:flex-row justify-between gap-4">
           <div>
@@ -50,6 +54,7 @@ export const Absen: React.FC = () => {
           </Link>
         </div>
       </Card>
+      </FadeIn>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card title={`Class Council (${council.length})`} className="space-y-2">
@@ -57,13 +62,13 @@ export const Absen: React.FC = () => {
             <Award className="w-3.5 h-3.5" />
             Pengurus / inti kelas
           </div>
-          <div className="space-y-2">
+          <StaggerReveal className="space-y-2" inView={false}>
             {council.length === 0 ? (
               <p className="text-xs text-slate-600 font-mono">Belum ada anggota council.</p>
             ) : (
               council.map(renderCard)
             )}
-          </div>
+          </StaggerReveal>
         </Card>
 
         <Card title={`Full Roster (${roster.length})`} className="space-y-2">
@@ -71,13 +76,13 @@ export const Absen: React.FC = () => {
             <Users className="w-3.5 h-3.5" />
             Anggota kelas
           </div>
-          <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+          <StaggerReveal className="space-y-2 max-h-[60vh] overflow-y-auto pr-1" inView={false}>
             {roster.length === 0 ? (
               <p className="text-xs text-slate-600 font-mono">Belum ada anggota roster.</p>
             ) : (
               roster.map(renderCard)
             )}
-          </div>
+          </StaggerReveal>
         </Card>
       </div>
     </div>

@@ -7,9 +7,11 @@ import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/shared/EmptyState';
 import { Search, User, Terminal, Award, ListOrdered } from 'lucide-react';
 import { type Member } from '../data/initialData';
-import { sortByAbsen } from '../utils/attendance';
+import { formatAbsen, sortByAbsen } from '../utils/attendance';
 import { TerminalOutput } from '../components/motion/TerminalOutput';
 import { MotionCard } from '../components/motion/MotionCard';
+import { FadeIn } from '../components/motion/FadeIn';
+import { StaggerReveal, StaggerItem } from '../components/motion/StaggerReveal';
 
 const Github = (props: any) => (
   <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -91,7 +93,7 @@ export const Members: React.FC = () => {
       `[INFO] Querying system directory for: '${member.role}'...`,
       `--------------------------------------------------`,
       `NAME        : ${member.name}`,
-      ...(viewByAbsen ? [`ABSEN       : ${member.absen ?? '—'}`] : []),
+      ...(viewByAbsen ? [`ABSEN       : ${formatAbsen(member)}`] : []),
       `NIS         : ${member.nis}`,
       `HIERARCHY   : ${member.isCore ? 'CORE_CLASS_COUNCIL' : 'GENERAL_ROSTER'}`,
       `DESIGNATION : ${member.role}`,
@@ -110,7 +112,7 @@ export const Members: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Search and Filters Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-brand-900/40 p-4 border border-brand-800 rounded-xl">
+      <FadeIn className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-brand-900/40 p-4 border border-brand-800 rounded-xl">
         <div className="relative w-full md:max-w-xs">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
           <input
@@ -155,7 +157,7 @@ export const Members: React.FC = () => {
             Urut Absen
           </Button>
         </div>
-      </div>
+      </FadeIn>
 
       <div className="space-y-12">
         {dbLoading ? (
@@ -175,15 +177,16 @@ export const Members: React.FC = () => {
           />
         ) : viewByAbsen ? (
           <Card title="Daftar urut nomor absen" className="max-w-2xl mx-auto">
-            <div className="space-y-2">
+            <StaggerReveal className="space-y-2" inView={false}>
               {absenList.map((member) => (
                 <MotionCard
                     key={member.id}
+                    stagger
                     onClick={() => handleInspectMember(member)}
                     className="flex items-center gap-4 p-3 rounded-xl border border-brand-800 bg-brand-900/30 hover:border-brand-600/50 cursor-pointer"
                   >
                   <span className="w-11 h-11 shrink-0 rounded-xl bg-brand-500 border-2 border-brand-950 text-lg font-mono font-bold text-white flex items-center justify-center">
-                    {member.absen}
+                    {formatAbsen(member)}
                   </span>
                   <img
                     src={member.image}
@@ -203,7 +206,7 @@ export const Members: React.FC = () => {
                   <span className={`w-2 h-2 rounded-full shrink-0 ${getStatusColor(member.status)}`} />
                   </MotionCard>
               ))}
-            </div>
+            </StaggerReveal>
           </Card>
         ) : (
           <>
@@ -215,10 +218,10 @@ export const Members: React.FC = () => {
                   <h2 className="text-xl font-bold text-white">Class Council (Core Officers)</h2>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <StaggerReveal className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" inView={false}>
                   {coreTeam.map(member => (
+                    <StaggerItem key={member.id}>
                     <Card
-                      key={member.id}
                       motion
                       onClick={() => handleInspectMember(member)}
                       className="border-brand-700/60 bg-gradient-to-br from-brand-800/40 via-brand-800/20 to-brand-900/60 hover:border-brand-500/50 hover:shadow-brand-500/5 relative group"
@@ -231,7 +234,6 @@ export const Members: React.FC = () => {
                         <span className={`w-1.5 h-1.5 rounded-full ${getStatusColor(member.status)}`} />
                         <span>{member.status.toUpperCase()}</span>
                       </div>
-
                       <div className="flex items-center gap-4">
                         <img
                           src={member.image}
@@ -263,8 +265,9 @@ export const Members: React.FC = () => {
                         )}
                       </div>
                     </Card>
+                    </StaggerItem>
                   ))}
-                </div>
+                </StaggerReveal>
               </div>
             )}
 
@@ -276,10 +279,10 @@ export const Members: React.FC = () => {
                   <h2 className="text-xl font-bold text-white">Full Roster</h2>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <StaggerReveal className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" inView={false}>
                   {regularRoster.map(member => (
+                    <StaggerItem key={member.id}>
                     <Card
-                      key={member.id}
                       motion
                       onClick={() => handleInspectMember(member)}
                       className="bg-brand-900/30 border-brand-800/80 flex flex-col justify-between"
@@ -312,8 +315,9 @@ export const Members: React.FC = () => {
                         <span className="text-[9px] text-slate-500 font-mono">{member.skills[0] || 'No tech stack'}</span>
                       </div>
                     </Card>
+                    </StaggerItem>
                   ))}
-                </div>
+                </StaggerReveal>
               </div>
             )}
           </>

@@ -13,6 +13,7 @@ import { GalleryAlbumEditor } from '../components/gallery/GalleryAlbumEditor';
 import { Image, Search, Plus, Calendar, Trash2, Eye, Layers, Pencil } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { softSpring, HOVER_LIFT_Y } from '../utils/animationConfig';
+import { StaggerReveal, StaggerItem } from '../components/motion/StaggerReveal';
 
 /** Framer: hover ringan saja — kartu langsung tampil */
 const GalleryCardInner: React.FC<{
@@ -197,11 +198,11 @@ export const Gallery: React.FC = () => {
           icon={Image}
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        <StaggerReveal className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6" inView={false}>
           {filteredAlbums.map((album) => {
             const photoCount = getAlbumPhotoCount(album);
             return (
-              <div key={album.id} className="gallery-card-wrapper">
+              <StaggerItem key={album.id} className="gallery-card-wrapper">
                 <GalleryCardInner
                   reduced={reduced}
                   onClick={() => setInspectAlbum(album)}
@@ -259,10 +260,10 @@ export const Gallery: React.FC = () => {
                     </div>
                   )}
                 </GalleryCardInner>
-              </div>
+              </StaggerItem>
             );
           })}
-        </div>
+        </StaggerReveal>
       )}
 
       {inspectAlbum && slides.length > 0 && (

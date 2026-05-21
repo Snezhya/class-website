@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { sortByAbsen } from '../../utils/attendance';
+import { formatAbsen, sortByAbsen } from '../../utils/attendance';
 
 export const AttendanceMarquee: React.FC = () => {
   const { members } = useApp();
@@ -18,7 +18,7 @@ export const AttendanceMarquee: React.FC = () => {
         {items.map((m, i) => (
           <div key={`${m.id}-${i}`} className="flex items-center gap-3 shrink-0">
             <span className="w-9 h-9 shrink-0 rounded-lg bg-brand-500 border-2 border-brand-950 text-sm font-mono font-bold text-white flex items-center justify-center">
-              {m.absen || '—'}
+              {formatAbsen(m)}
             </span>
             <img
               src={m.image}

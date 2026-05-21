@@ -2,16 +2,45 @@ import { softSpring, gentleSpring, tweenSmooth, HOVER_LIFT_Y, HOVER_SCALE } from
 
 /** Framer Motion — UI transitions, hover, layout */
 export const pageVariants = {
-  initial: { opacity: 0, y: 8 },
+  initial: { opacity: 0, y: 10 },
   animate: {
     opacity: 1,
     y: 0,
-    transition: tweenSmooth(0.55),
+    transition: tweenSmooth(0.48),
   },
   exit: {
     opacity: 0,
-    y: -6,
-    transition: tweenSmooth(0.4),
+    y: -8,
+    transition: tweenSmooth(0.36),
+  },
+};
+
+export const staggerContainer = {
+  hidden: { opacity: 1 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.07,
+      delayChildren: 0.05,
+    },
+  },
+};
+
+export const staggerItem = {
+  hidden: { opacity: 0, y: 14 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: tweenSmooth(0.5),
+  },
+};
+
+export const fadeInUp = {
+  hidden: { opacity: 0, y: 16 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: tweenSmooth(0.55),
   },
 };
 
