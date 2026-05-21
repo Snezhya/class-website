@@ -41,6 +41,26 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
     { name: 'Admin', path: '/admin', icon: ShieldAlert }
   ];
 
+  // HP (Mobile) drawer links: "Absen" and "Members" merged into "Siswa"
+  const mobileDrawerLinks = [
+    { name: 'Dashboard', path: '/', icon: Terminal },
+    { name: 'Siswa (Profil & Absen)', path: '/members', icon: Users },
+    { name: 'Tasks', path: '/tasks', icon: FileText },
+    { name: 'Schedule', path: '/schedule', icon: Calendar },
+    { name: 'Gallery', path: '/gallery', icon: Image },
+    { name: 'Notes', path: '/notes', icon: FileText },
+    { name: 'Admin', path: '/admin', icon: ShieldAlert }
+  ];
+
+  // HP (Mobile) bottom navigation bar items (exactly 5 slots)
+  const mobileBottomLinks = [
+    { name: 'Dashboard', path: '/', icon: Terminal },
+    { name: 'Siswa', path: '/members', icon: Users }, // Absen & Member merged
+    { name: 'Tasks', path: '/tasks', icon: FileText },
+    { name: 'Schedule', path: '/schedule', icon: Calendar },
+    { name: 'Gallery', path: '/gallery', icon: Image } // Gallery is now right in the main bar!
+  ];
+
   const handleAdminLogout = () => {
     logout();
     navigate('/');
@@ -178,7 +198,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
               className="absolute right-0 top-0 bottom-0 w-[min(100%,280px)] pt-16 bg-brand-950 border-l border-brand-800 flex flex-col justify-between shadow-2xl"
             >
               <nav className="p-6 flex flex-col gap-2">
-                {navLinks.map((link, i) => {
+                {mobileDrawerLinks.map((link, i) => {
                   const Icon = link.icon;
                   const isActive = location.pathname === link.path;
                   return (
@@ -236,7 +256,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
 
       {/* Mobile Native-like Bottom Navigation Bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-brand-800/80 backdrop-blur-md px-3 py-2 flex items-center justify-around">
-        {navLinks.slice(0, 5).map(link => {
+        {mobileBottomLinks.map(link => {
           const Icon = link.icon;
           const isActive = location.pathname === link.path;
           return (

@@ -52,6 +52,12 @@ export const Members: React.FC = () => {
     if (searchVal) {
       setSearchQuery(searchVal);
     }
+    const viewVal = params.get('view');
+    if (viewVal === 'absen') {
+      setViewByAbsen(true);
+    } else if (viewVal === 'profile') {
+      setViewByAbsen(false);
+    }
   }, [location]);
 
   // Filters logic
@@ -110,14 +116,42 @@ export const Members: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Segmented View Tab Toggle — Merged Members & Absen page layout */}
+      <FadeIn className="w-full">
+        <div className="flex p-1 bg-brand-950/60 border border-brand-800 rounded-xl select-none max-w-md mx-auto">
+          <button
+            onClick={() => setViewByAbsen(false)}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-medium transition-all duration-300 font-mono ${
+              !viewByAbsen
+                ? 'bg-brand-800 border border-brand-700 text-white shadow-inner'
+                : 'text-slate-400 hover:text-white hover:bg-brand-900/40'
+            }`}
+          >
+            <User className="w-4 h-4" />
+            PROFIL SISWA
+          </button>
+          <button
+            onClick={() => setViewByAbsen(true)}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg text-xs font-medium transition-all duration-300 font-mono ${
+              viewByAbsen
+                ? 'bg-brand-800 border border-brand-700 text-white shadow-inner'
+                : 'text-slate-400 hover:text-white hover:bg-brand-900/40'
+            }`}
+          >
+            <ListOrdered className="w-4 h-4" />
+            DAFTAR ABSEN
+          </button>
+        </div>
+      </FadeIn>
+
       {/* Search and Filters Header */}
       <FadeIn className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-brand-900/40 p-4 border border-brand-800 rounded-xl">
         <div className="relative w-full md:max-w-xs">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
           <input
             type="text"
-            placeholder="Search students, NIS, skills..."
+            placeholder={viewByAbsen ? "Cari nomor absen, nama, NIS..." : "Search students, NIS, skills..."}
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-4 py-2 bg-brand-950 border border-brand-800 rounded-lg text-xs text-white outline-none focus:border-brand-500 transition-colors placeholder-slate-500"
@@ -147,14 +181,6 @@ export const Members: React.FC = () => {
             icon={User}
           >
             Full Roster
-          </Button>
-          <Button
-            variant={viewByAbsen ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => setViewByAbsen(prev => !prev)}
-            icon={ListOrdered}
-          >
-            Urut Absen
           </Button>
         </div>
       </FadeIn>
