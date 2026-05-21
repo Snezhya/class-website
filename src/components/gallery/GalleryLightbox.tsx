@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import gsap from 'gsap';
 import { animate } from 'animejs';
-import { X, ChevronLeft, ChevronRight, Calendar, Images } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Calendar, Images, Pencil } from 'lucide-react';
 import { type GalleryAlbum } from '../../data/initialData';
 import { type LightboxSlide, prefersReducedMotion } from '../../utils/galleryUtils';
 
@@ -12,6 +12,8 @@ interface GalleryLightboxProps {
   initialIndex: number;
   isOpen: boolean;
   onClose: () => void;
+  isAdmin?: boolean;
+  onEdit?: () => void;
 }
 
 export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
@@ -20,6 +22,8 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
   initialIndex,
   isOpen,
   onClose,
+  isAdmin,
+  onEdit,
 }) => {
   const [index, setIndex] = useState(initialIndex);
   const mainImgRef = useRef<HTMLImageElement>(null);
@@ -104,14 +108,26 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
               </p>
               <h2 className="text-sm sm:text-base font-bold text-white truncate">{album.title}</h2>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-brand-800/60 transition-colors"
-              aria-label="Tutup"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-1 shrink-0">
+              {isAdmin && onEdit && (
+                <button
+                  type="button"
+                  onClick={onEdit}
+                  className="p-2 rounded-lg text-brand-400 hover:text-white hover:bg-brand-800/60 transition-colors"
+                  aria-label="Edit album"
+                >
+                  <Pencil className="w-5 h-5" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-brand-800/60 transition-colors"
+                aria-label="Tutup"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </motion.div>
 
           <div
@@ -148,7 +164,7 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
             <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-2">
               {isCover && (
                 <span className="text-[9px] font-mono text-terminal-cyan bg-brand-950/90 px-2 py-0.5 rounded border border-brand-700">
-                  THUMBNAIL UTAMA
+                  SAMPUL ALBUM
                 </span>
               )}
               <img
@@ -187,7 +203,7 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
             className="shrink-0 border-t border-brand-800/80 bg-brand-900/40 px-3 sm:px-4 py-3"
           >
             <p className="text-[9px] font-mono text-slate-500 mb-2 uppercase tracking-wider">
-              Foto dalam album (thumbnail + anak)
+              Galeri moment · semua frame
             </p>
             <div
               ref={thumbStripRef}
@@ -210,7 +226,7 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
                   <img src={slide.image} alt="" className="w-full h-full object-cover" loading="lazy" />
                   {i === 0 && (
                     <span className="absolute bottom-0 inset-x-0 bg-brand-950/90 text-[7px] font-mono text-center text-terminal-cyan py-0.5">
-                      COVER
+                      SAMPUL
                     </span>
                   )}
                 </motion.button>

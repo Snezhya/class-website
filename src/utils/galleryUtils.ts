@@ -2,7 +2,7 @@ import { type GalleryAlbum } from '../data/initialData';
 
 export type LightboxSlide = { id: string; image: string };
 
-/** Semua gambar untuk inspect: cover (thumbnail utama) + foto anak */
+/** Semua frame untuk lightbox: sampul + foto tambahan */
 export const getAlbumSlides = (album: GalleryAlbum): LightboxSlide[] => [
   { id: `${album.id}-cover`, image: album.coverImage },
   ...album.photos.map((p) => ({ id: p.id, image: p.image })),

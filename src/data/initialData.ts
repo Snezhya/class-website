@@ -47,14 +47,14 @@ export interface ClassNote {
   author: string;
 }
 
-/** Foto anak di dalam satu album */
+/** Foto tambahan di dalam satu album (selain sampul) */
 export interface GalleryPhoto {
   id: string;
   image: string;
   sortOrder: number;
 }
 
-/** Album = 1 thumbnail di halaman; berisi banyak foto saat inspect */
+/** Album = 1 sampul di halaman; galeri lengkap saat dibuka */
 export interface GalleryAlbum {
   id: string;
   title: string;

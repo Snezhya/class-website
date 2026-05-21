@@ -317,7 +317,7 @@ export const deleteNoteDb = async (id: string): Promise<void> => {
 };
 
 // ============================================================
-// GALLERY ALBUM (1 thumbnail + foto anak)
+// GALLERY ALBUM (sampul + foto tambahan)
 // ============================================================
 
 const mapDbToGalleryPhoto = (row: any): GalleryPhoto => ({
@@ -341,7 +341,7 @@ export const mapDbToGalleryAlbum = (row: any): GalleryAlbum => {
   };
 };
 
-/** Fallback: tabel lama `gallery` (1 baris = 1 album tanpa anak) */
+/** Fallback: tabel lama `gallery` (1 baris = 1 album tanpa foto tambahan) */
 const mapLegacyGalleryRow = (row: any): GalleryAlbum => ({
   id: row.id.toString(),
   title: row.title || '',
@@ -442,6 +442,88 @@ export const deleteGalleryAlbumDb = async (id: string): Promise<void> => {
     const legacy = await supabase.from('gallery').delete().eq('id', parseInt(id));
     if (legacy.error) throw error;
   }
+};
+
+export const fetchGalleryAlbumById = async (albumId: string): Promise<GalleryAlbum> => {
+  const { data, error } = await supabase
+    .from('gallery_album')
+    .select('*, gallery_photo(*)')
+    .eq('id', parseInt(albumId))
+    .single();
+  if (error) throw error;
+  return mapDbToGalleryAlbum(data);
+};
+
+export const updateGalleryAlbumDb = async (
+  albumId: string,
+  fields: Partial<Pick<GalleryAlbum, 'title' | 'description' | 'category' | 'date' | 'coverImage'>>
+): Promise<GalleryAlbum> => {
+  const payload: Record<string, unknown> = {};
+  if (fields.title !== undefined) payload.title = fields.title;
+  if (fields.description !== undefined) payload.description = fields.description;
+  if (fields.category !== undefined) payload.category = fields.category;
+  if (fields.date !== undefined) payload.date = fields.date;
+  if (fields.coverImage !== undefined) payload.cover_image = fields.coverImage;
+
+  const { error } = await supabase.from('gallery_album').update(payload).eq('id', parseInt(albumId));
+  if (error) {
+    if (isMissingGalleryAlbumTable(error)) {
+      const legacy: Record<string, unknown> = {};
+      if (fields.title !== undefined) legacy.title = fields.title;
+      if (fields.description !== undefined) legacy.description = fields.description;
+      if (fields.category !== undefined) legacy.category = fields.category;
+      if (fields.date !== undefined) legacy.date = fields.date;
+      if (fields.coverImage !== undefined) legacy.image = fields.coverImage;
+      const { data, error: legacyErr } = await supabase
+        .from('gallery')
+        .update(legacy)
+        .eq('id', parseInt(albumId))
+        .select()
+        .single();
+      if (legacyErr) throw legacyErr;
+      return mapLegacyGalleryRow(data);
+    }
+    throw error;
+  }
+  return fetchGalleryAlbumById(albumId);
+};
+
+export const addGalleryPhotosDb = async (albumId: string, imageUrls: string[]): Promise<GalleryAlbum> => {
+  if (imageUrls.length === 0) return fetchGalleryAlbumById(albumId);
+
+  const album = await fetchGalleryAlbumById(albumId);
+  const maxOrder = album.photos.reduce((m, p) => Math.max(m, p.sortOrder), 0);
+  const rows = imageUrls.map((url, i) => ({
+    album_id: parseInt(albumId),
+    image: url,
+    sort_order: maxOrder + i + 1,
+  }));
+
+  const { error } = await supabase.from('gallery_photo').insert(rows);
+  if (error) throw error;
+  return fetchGalleryAlbumById(albumId);
+};
+
+export const deleteGalleryPhotoDb = async (photoId: string): Promise<void> => {
+  const { error } = await supabase.from('gallery_photo').delete().eq('id', parseInt(photoId));
+  if (error) throw error;
+};
+
+export const setAlbumCoverFromChildDb = async (albumId: string, photoId: string): Promise<GalleryAlbum> => {
+  const album = await fetchGalleryAlbumById(albumId);
+  const child = album.photos.find((p) => p.id === photoId);
+  if (!child) throw new Error('Foto tidak ditemukan');
+
+  const oldCover = album.coverImage;
+  await supabase.from('gallery_album').update({ cover_image: child.image }).eq('id', parseInt(albumId));
+  await supabase.from('gallery_photo').delete().eq('id', parseInt(photoId));
+  await supabase.from('gallery_photo').insert([{
+    album_id: parseInt(albumId),
+    image: oldCover,
+    sort_order: child.sortOrder,
+  }]);
+
+  return fetchGalleryAlbumById(albumId);
 };
 
 // ============================================================

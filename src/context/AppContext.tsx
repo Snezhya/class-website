@@ -11,6 +11,8 @@ import {
   fetchSchedules, addScheduleDb, editScheduleDb, deleteScheduleDb, mapDbToSchedule,
   fetchNotes, addNoteDb, editNoteDb, deleteNoteDb, mapDbToNote,
   fetchGalleryAlbums, addGalleryAlbumDb, deleteGalleryAlbumDb,
+  updateGalleryAlbumDb, addGalleryPhotosDb, deleteGalleryPhotoDb, setAlbumCoverFromChildDb,
+  fetchGalleryAlbumById,
   fetchSettings, updateSettingsDb, resetSettingsDb, mapDbToSettings,
   fetchActivityLogs, addActivityLogDb,
 } from '../utils/supabaseApi';
@@ -53,7 +55,7 @@ interface AppContextType {
   editNote: (id: string, note: Partial<ClassNote>) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
 
-  // Gallery album CRUD (1 thumbnail + foto anak)
+  // Gallery album CRUD (sampul + foto tambahan)
   addGalleryAlbum: (input: {
     title: string;
     description: string;
@@ -62,6 +64,13 @@ interface AppContextType {
     childImageUrls: string[];
   }) => Promise<void>;
   deleteGallery: (id: string) => Promise<void>;
+  updateGalleryAlbum: (
+    albumId: string,
+    fields: Partial<Pick<GalleryAlbum, 'title' | 'description' | 'category' | 'date' | 'coverImage'>>
+  ) => Promise<GalleryAlbum>;
+  addPhotosToGalleryAlbum: (albumId: string, imageUrls: string[]) => Promise<GalleryAlbum>;
+  deleteGalleryPhoto: (albumId: string, photoId: string) => Promise<GalleryAlbum>;
+  setGalleryCoverFromPhoto: (albumId: string, photoId: string) => Promise<GalleryAlbum>;
 
   // Settings
   updateSettings: (settings: Partial<SystemSettings>) => void;
@@ -643,6 +652,92 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const updateGalleryAlbum = async (
+    albumId: string,
+    fields: Partial<Pick<GalleryAlbum, 'title' | 'description' | 'category' | 'date' | 'coverImage'>>
+  ): Promise<GalleryAlbum> => {
+    if (hasSupabase) {
+      const updated = await updateGalleryAlbumDb(albumId, fields);
+      setGallery((prev) => {
+        const next = prev.map((g) => (g.id === albumId ? updated : g));
+        storage.set('gallery', next);
+        return next;
+      });
+      addActivityLog(`GALLERY DAEMON: Updated album '${updated.title}' metadata`);
+      return updated;
+    }
+    const updated = gallery.find((g) => g.id === albumId)!;
+    const merged = { ...updated, ...fields };
+    setGallery((prev) => prev.map((g) => (g.id === albumId ? merged : g)));
+    return merged;
+  };
+
+  const addPhotosToGalleryAlbum = async (albumId: string, imageUrls: string[]): Promise<GalleryAlbum> => {
+    if (hasSupabase) {
+      const updated = await addGalleryPhotosDb(albumId, imageUrls);
+      setGallery((prev) => {
+        const next = prev.map((g) => (g.id === albumId ? updated : g));
+        storage.set('gallery', next);
+        return next;
+      });
+      addActivityLog(`GALLERY DAEMON: Added ${imageUrls.length} photo(s) to '${updated.title}'`);
+      return updated;
+    }
+    const base = gallery.find((g) => g.id === albumId)!;
+    const newPhotos = imageUrls.map((url, i) => ({
+      id: `p-${Date.now()}-${i}`,
+      image: url,
+      sortOrder: base.photos.length + i + 1,
+    }));
+    const updated = { ...base, photos: [...base.photos, ...newPhotos] };
+    setGallery((prev) => prev.map((g) => (g.id === albumId ? updated : g)));
+    return updated;
+  };
+
+  const deleteGalleryPhoto = async (albumId: string, photoId: string): Promise<GalleryAlbum> => {
+    if (hasSupabase) {
+      await deleteGalleryPhotoDb(photoId);
+      const updated = await fetchGalleryAlbumById(albumId);
+      setGallery((prev) => {
+        const next = prev.map((g) => (g.id === albumId ? updated : g));
+        storage.set('gallery', next);
+        return next;
+      });
+      addActivityLog(`GALLERY DAEMON: Removed child photo from album`);
+      return updated;
+    }
+    const base = gallery.find((g) => g.id === albumId)!;
+    const updated = { ...base, photos: base.photos.filter((p) => p.id !== photoId) };
+    setGallery((prev) => prev.map((g) => (g.id === albumId ? updated : g)));
+    return updated;
+  };
+
+  const setGalleryCoverFromPhoto = async (albumId: string, photoId: string): Promise<GalleryAlbum> => {
+    if (hasSupabase) {
+      const updated = await setAlbumCoverFromChildDb(albumId, photoId);
+      setGallery((prev) => {
+        const next = prev.map((g) => (g.id === albumId ? updated : g));
+        storage.set('gallery', next);
+        return next;
+      });
+      addActivityLog(`GALLERY DAEMON: Swapped cover on '${updated.title}'`);
+      return updated;
+    }
+    const base = gallery.find((g) => g.id === albumId)!;
+    const child = base.photos.find((p) => p.id === photoId);
+    if (!child) throw new Error('Foto tidak ditemukan');
+    const updated: GalleryAlbum = {
+      ...base,
+      coverImage: child.image,
+      photos: [
+        ...base.photos.filter((p) => p.id !== photoId),
+        { id: `p-old-cover`, image: base.coverImage, sortOrder: child.sortOrder },
+      ],
+    };
+    setGallery((prev) => prev.map((g) => (g.id === albumId ? updated : g)));
+    return updated;
+  };
+
   // Settings Panel Actions
   const updateSettings = (newSettings: Partial<SystemSettings>) => {
     setSettings(prev => {
@@ -677,6 +772,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addSchedule, editSchedule, deleteSchedule,
       addNote, editNote, deleteNote,
       addGalleryAlbum, deleteGallery,
+      updateGalleryAlbum, addPhotosToGalleryAlbum, deleteGalleryPhoto, setGalleryCoverFromPhoto,
       updateSettings, resetSettings, addActivityLog
     }}>
       {children}

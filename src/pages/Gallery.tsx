@@ -9,7 +9,8 @@ import { Modal } from '../components/ui/Modal';
 import { EmptyState } from '../components/shared/EmptyState';
 import { useToast } from '../context/ToastContext';
 import { type GalleryAlbum } from '../data/initialData';
-import { Image, Search, Plus, Calendar, Trash2, Eye, Layers } from 'lucide-react';
+import { GalleryAlbumEditor } from '../components/gallery/GalleryAlbumEditor';
+import { Image, Search, Plus, Calendar, Trash2, Eye, Layers, Pencil } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 
@@ -22,6 +23,7 @@ export const Gallery: React.FC = () => {
   const [activeCategory, setActiveCategory] = useState<'All' | 'Practicum' | 'Event' | 'Exam' | 'Classroom'>('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [inspectAlbum, setInspectAlbum] = useState<GalleryAlbum | null>(null);
+  const [editingAlbum, setEditingAlbum] = useState<GalleryAlbum | null>(null);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [formTitle, setFormTitle] = useState('');
@@ -63,6 +65,12 @@ export const Gallery: React.FC = () => {
     gsap.fromTo(headerRef.current, { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' });
   }, [reduced]);
 
+  useEffect(() => {
+    if (!inspectAlbum) return;
+    const fresh = gallery.find((a) => a.id === inspectAlbum.id);
+    if (fresh) setInspectAlbum(fresh);
+  }, [gallery, inspectAlbum?.id]);
+
   const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
@@ -77,7 +85,7 @@ export const Gallery: React.FC = () => {
       return;
     }
     if (formPhotoFiles.length === 0) {
-      toast('Pilih minimal 1 foto (foto pertama = thumbnail album)', 'warning');
+      toast('Pilih minimal 1 foto (file pertama = sampul album)', 'warning');
       return;
     }
 
@@ -100,7 +108,7 @@ export const Gallery: React.FC = () => {
       setIsAddModalOpen(false);
       toast(
         urls.length > 1
-          ? `Album "${formTitle}" — 1 thumbnail + ${urls.length - 1} foto anak`
+          ? `Album "${formTitle}" — sampul + ${urls.length - 1} foto`
           : `Album "${formTitle}" ditambahkan`,
         'success'
       );
@@ -120,6 +128,16 @@ export const Gallery: React.FC = () => {
     }
   };
 
+  const syncAlbum = (updated: GalleryAlbum) => {
+    if (inspectAlbum?.id === updated.id) setInspectAlbum(updated);
+    if (editingAlbum?.id === updated.id) setEditingAlbum(updated);
+  };
+
+  const openEdit = (album: GalleryAlbum, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setEditingAlbum(album);
+  };
+
   const slides = inspectAlbum ? getAlbumSlides(inspectAlbum) : [];
 
   return (
@@ -133,8 +151,8 @@ export const Gallery: React.FC = () => {
                 Media Gallery & Activity Archive
               </h2>
               <p className="text-xs text-slate-500 max-w-lg font-sans">
-                Halaman hanya menampilkan <strong className="text-slate-400">thumbnail album</strong>.
-                Klik untuk inspect — lihat foto utama + semua foto anak di bawah.
+                Setiap kartu adalah <strong className="text-slate-400">sampul album</strong>.
+                Klik untuk membuka galeri lengkap semua foto dalam moment itu.
               </p>
             </div>
             {isAdmin && (
@@ -239,13 +257,24 @@ export const Gallery: React.FC = () => {
                     <p className="text-xs text-slate-400 line-clamp-2">{album.description}</p>
                   </div>
                   {isAdmin && (
-                    <button
-                      type="button"
-                      onClick={(e) => handleDeleteAlbum(e, album.id, album.title)}
-                      className="absolute bottom-3 right-3 p-1.5 rounded-lg bg-terminal-red/10 border border-terminal-red/20 text-terminal-red opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="absolute bottom-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={(e) => openEdit(album, e)}
+                        className="p-1.5 rounded-lg bg-brand-800/80 border border-brand-600 text-brand-300 hover:text-white"
+                        title="Edit album"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => handleDeleteAlbum(e, album.id, album.title)}
+                        className="p-1.5 rounded-lg bg-terminal-red/10 border border-terminal-red/20 text-terminal-red hover:bg-terminal-red/30"
+                        title="Hapus seluruh album"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   )}
                 </motion.div>
               );
@@ -261,6 +290,19 @@ export const Gallery: React.FC = () => {
           slides={slides}
           initialIndex={0}
           onClose={() => setInspectAlbum(null)}
+          isAdmin={isAdmin}
+          onEdit={isAdmin ? () => openEdit(inspectAlbum) : undefined}
+        />
+      )}
+
+      {editingAlbum && (
+        <GalleryAlbumEditor
+          album={editingAlbum}
+          isOpen={!!editingAlbum}
+          onClose={() => setEditingAlbum(null)}
+          onUpdated={(updated) => {
+            syncAlbum(updated);
+          }}
         />
       )}
 
@@ -302,7 +344,7 @@ export const Gallery: React.FC = () => {
           <div className="space-y-1">
             <label className="text-slate-400">FOTO ALBUM * (banyak file)</label>
             <p className="text-[9px] text-slate-600 mb-1">
-              File <strong>pertama</strong> = thumbnail di halaman. Sisanya = foto anak (hanya di inspect).
+              File <strong>pertama</strong> = sampul di halaman. Sisanya masuk galeri saat dibuka.
             </p>
             <div className="border border-dashed border-brand-800 rounded-lg p-6 bg-brand-950 text-center relative">
               <input
@@ -320,7 +362,7 @@ export const Gallery: React.FC = () => {
               )}
               <span className="text-[10px] text-slate-400 block mt-2">
                 {formPhotoFiles.length > 0
-                  ? `${formPhotoFiles.length} file — #1 thumbnail, #2+ foto anak`
+                  ? `${formPhotoFiles.length} file — #1 sampul, sisanya galeri`
                   : 'Pilih banyak foto sekaligus'}
               </span>
             </div>
