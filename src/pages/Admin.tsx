@@ -10,12 +10,77 @@ import { AdminMemberEditor } from '../components/admin/AdminMemberEditor';
 import { AdminContentPanel } from '../components/admin/AdminContentPanel';
 import { TerminalOutput } from '../components/motion/TerminalOutput';
 import { useAnimeShake } from '../hooks/useAnimeMicro';
+import { useDragDropUpload } from '../hooks/useDragDropUpload';
 import { BrandLogo } from '../components/shared/BrandLogo';
 import { 
   ShieldAlert, Lock, Eye, EyeOff, Trash2, RefreshCw, Pencil
 } from 'lucide-react';
 import { type Member } from '../data/initialData';
 
+
+// --- Admin Workspace Sub-components ---
+const BackgroundImageUpload: React.FC<{
+  currentImage: string;
+  onUpload: (file: File) => Promise<void>;
+}> = ({ currentImage, onUpload }) => {
+  const [busy, setBusy] = useState(false);
+  const dragDrop = useDragDropUpload({
+    onFileSelect: async (files) => {
+      if (files.length > 0) {
+        setBusy(true);
+        try {
+          await onUpload(files[0]);
+        } finally {
+          setBusy(false);
+        }
+      }
+    },
+    multiple: false,
+  });
+
+  return (
+    <div
+      {...dragDrop}
+      className={`border-2 border-dashed rounded-lg p-3 transition-all relative ${
+        dragDrop.isDragging
+          ? 'border-brand-400 bg-brand-900/40'
+          : 'border-brand-800 hover:border-brand-600'
+      }`}
+    >
+      <input
+        type="file"
+        accept="image/*"
+        disabled={busy}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        onChange={async (e) => {
+          const file = e.target.files?.[0];
+          if (file) {
+            setBusy(true);
+            try {
+              await onUpload(file);
+            } finally {
+              setBusy(false);
+            }
+          }
+        }}
+      />
+      <div className="flex items-center justify-between gap-3">
+        <div className="text-[10px] text-slate-400">
+          {busy ? (
+            <span className="text-brand-300">Uploading...</span>
+          ) : dragDrop.isDragging ? (
+            <span className="text-brand-300 font-bold">Lepaskan untuk ganti background</span>
+          ) : (
+            'Klik atau geser gambar ke sini'
+          )}
+        </div>
+        {currentImage && (
+          <img src={currentImage} alt="Current BG" className="w-10 h-6 object-cover rounded border border-brand-700" />
+        )}
+      </div>
+    </div>
+  );
+};
 
 export const Admin: React.FC = () => {
   const { 
@@ -88,6 +153,13 @@ export const Admin: React.FC = () => {
       reader.readAsDataURL(file);
     }
   };
+
+  const dragDropMember = useDragDropUpload({
+    onFileSelect: (files) => {
+      if (files.length > 0) handlePhotoFileChange({ target: { files } } as any);
+    },
+    multiple: false,
+  });
 
   // Setup initial auth states if already logged in
   useEffect(() => {
@@ -547,20 +619,12 @@ export const Admin: React.FC = () => {
                 {settings.backgroundType === 'image' && (
                   <div className="space-y-2">
                     <label className="text-slate-400">BACKGROUND_IMAGE_UPLOAD</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-brand-800 file:text-white"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (!file) return;
-                        try {
-                          const url = await uploadSiteAsset(file);
-                          updateSettings({ backgroundType: 'image', backgroundImage: url });
-                          toast('Background image uploaded to site-assets', 'success');
-                        } catch (err: any) {
-                          toast(`Upload failed: ${err.message}`, 'error');
-                        }
+                    <BackgroundImageUpload
+                      currentImage={settings.backgroundImage}
+                      onUpload={async (file) => {
+                        const url = await uploadSiteAsset(file);
+                        updateSettings({ backgroundType: 'image', backgroundImage: url });
+                        toast('Background image uploaded to site-assets', 'success');
                       }}
                     />
                   </div>
@@ -751,20 +815,35 @@ export const Admin: React.FC = () => {
 
                 <div className="space-y-1">
                   <label className="text-slate-400">STUDENT_PHOTO_UPLOAD</label>
-                  <div className="flex items-center gap-4 p-3 bg-brand-950/60 border border-brand-850 rounded-lg">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoFileChange}
-                      className="text-xs file:mr-4 file:py-1.5 file:px-3 file:rounded file:border file:border-brand-700 file:bg-brand-800 file:text-white file:cursor-pointer hover:file:bg-brand-750 text-slate-400"
-                    />
+                  <div
+                    {...dragDropMember}
+                    className={`flex items-center gap-4 p-3 rounded-lg transition-all border relative ${
+                      dragDropMember.isDragging
+                        ? 'border-brand-400 bg-brand-900/60'
+                        : 'border-brand-850 bg-brand-950/60'
+                    }`}
+                  >
+                    <div className="flex-1 relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoFileChange}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <div className="text-[10px] text-slate-400 pointer-events-none">
+                        {dragDropMember.isDragging ? (
+                          <span className="text-brand-300 font-bold">Lepaskan untuk pilih foto</span>
+                        ) : (
+                          <span>Klik atau geser foto ke sini</span>
+                        )}
+                      </div>
+                    </div>
                     {memPhotoPreview && (
                       <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-slate-500">PREVIEW:</span>
                         <img
                           src={memPhotoPreview}
                           alt="Roster preview"
-                          className="w-8 h-8 rounded object-cover border border-brand-750"
+                          className="w-10 h-10 rounded object-cover border border-brand-750"
                         />
                       </div>
                     )}

@@ -5,6 +5,7 @@ import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { GalleryAlbumEditor } from '../gallery/GalleryAlbumEditor';
 import { uploadGalleryPhoto } from '../../utils/supabaseApi';
+import { useDragDropUpload } from '../../hooks/useDragDropUpload';
 import { type GalleryAlbum } from '../../data/initialData';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 
@@ -18,6 +19,12 @@ export const AdminGalleryPanel: React.FC = () => {
   const [category, setCategory] = useState<GalleryAlbum['category']>('Practicum');
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+
+  const handleFilesSelected = (files: File[]) => {
+    setFiles(files);
+  };
+
+  const dragDrop = useDragDropUpload({ onFileSelect: handleFilesSelected, multiple: true });
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,13 +98,34 @@ export const AdminGalleryPanel: React.FC = () => {
               <option value="Exam">Exam</option>
               <option value="Classroom">Classroom</option>
             </select>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
-              className="text-xs text-slate-400"
-            />
+            <div
+              {...dragDrop}
+              className={`border-2 border-dashed rounded-lg p-4 text-center transition-all ${
+                dragDrop.isDragging
+                  ? 'border-brand-400 bg-brand-900/40'
+                  : 'border-brand-800 bg-brand-950/20'
+              }`}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              <div className="relative">
+                <p className="text-xs text-slate-400 mb-2">
+                  {dragDrop.isDragging ? (
+                    <span className="text-brand-300 font-bold">Lepaskan untuk tambah foto</span>
+                  ) : (
+                    'Drag & drop foto atau klik untuk pilih'
+                  )}
+                </p>
+                {files.length > 0 && (
+                  <p className="text-[10px] text-brand-300">{files.length} file siap diunggah</p>
+                )}
+              </div>
+            </div>
             <Button type="submit" variant="terminal" size="sm" disabled={uploading}>
               {uploading ? 'Mengunggah...' : 'Simpan album'}
             </Button>

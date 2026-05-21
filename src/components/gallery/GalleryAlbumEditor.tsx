@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import { uploadGalleryPhoto } from '../../utils/supabaseApi';
+import { useDragDropUpload } from '../../hooks/useDragDropUpload';
 import { type GalleryAlbum } from '../../data/initialData';
 import { Image, Trash2, Star, Plus, Save } from 'lucide-react';
 
@@ -35,6 +36,24 @@ export const GalleryAlbumEditor: React.FC<GalleryAlbumEditorProps> = ({
   const [coverImage, setCoverImage] = useState(album.coverImage);
   const [photos, setPhotos] = useState(album.photos);
   const [busy, setBusy] = useState(false);
+
+  const dragDropCover = useDragDropUpload({
+    onFileSelect: (files) => {
+      if (files.length > 0) {
+        handleReplaceCover({ target: { files } } as any);
+      }
+    },
+    multiple: false,
+  });
+
+  const dragDropPhotos = useDragDropUpload({
+    onFileSelect: (files) => {
+      if (files.length > 0) {
+        handleAddChildren({ target: { files } } as any);
+      }
+    },
+    multiple: true,
+  });
 
   useEffect(() => {
     setTitle(album.title);
@@ -186,7 +205,14 @@ export const GalleryAlbumEditor: React.FC<GalleryAlbumEditorProps> = ({
               alt="Cover"
               className="w-full sm:w-40 aspect-video object-cover rounded-lg border-2 border-brand-500"
             />
-            <label className="flex-1 border border-dashed border-brand-700 rounded-lg p-4 text-center cursor-pointer hover:border-brand-500 transition-colors relative">
+            <label
+              {...dragDropCover}
+              className={`flex-1 border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-all relative ${
+                dragDropCover.isDragging
+                  ? 'border-brand-400 bg-brand-800/30'
+                  : 'border-brand-700 hover:border-brand-500'
+              }`}
+            >
               <input
                 type="file"
                 accept="image/*"
@@ -195,63 +221,76 @@ export const GalleryAlbumEditor: React.FC<GalleryAlbumEditorProps> = ({
                 onChange={handleReplaceCover}
               />
               <Image className="w-6 h-6 mx-auto text-slate-500 mb-1" />
-              <span className="text-[10px] text-slate-400">Unggah sampul baru</span>
+              <span className="text-[10px] text-slate-400">
+                {dragDropCover.isDragging ? (
+                  <span className="text-brand-300 font-bold">Lepaskan untuk ganti sampul</span>
+                ) : (
+                  'Drag & drop atau klik untuk ganti'
+                )}
+              </span>
             </label>
           </div>
         </div>
 
         <div className="space-y-2 border-t border-brand-800 pt-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <label className="text-slate-400">FOTO TAMBAHAN ({photos.length})</label>
-              <label className="inline-flex items-center gap-1 px-2 py-1 rounded border border-brand-700 text-brand-300 cursor-pointer hover:bg-brand-800/50 relative">
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                  disabled={busy}
-                  onChange={handleAddChildren}
-                />
-                <Plus className="w-3.5 h-3.5" />
-                Tambah foto
-              </label>
-            </div>
-
-            {photos.length === 0 ? (
-              <p className="text-slate-600 text-[10px]">Belum ada foto tambahan — hanya sampul.</p>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {photos.map((p) => (
-                  <div
-                    key={p.id}
-                    className="relative group rounded-lg overflow-hidden border border-brand-800 aspect-video"
-                  >
-                    <img src={p.image} alt="" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-brand-950/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                      <button
-                        type="button"
-                        title="Jadikan sampul album"
-                        disabled={busy}
-                        onClick={() => handleSetCoverFromChild(p.id)}
-                        className="p-1.5 rounded bg-brand-800 text-terminal-cyan hover:bg-brand-700"
-                      >
-                        <Star className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        title="Hapus foto ini"
-                        disabled={busy}
-                        onClick={() => handleDeleteChild(p.id)}
-                        className="p-1.5 rounded bg-terminal-red/20 text-terminal-red hover:bg-terminal-red/30"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <label className="text-slate-400">FOTO TAMBAHAN ({photos.length})</label>
+            <label
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded border text-brand-300 cursor-pointer transition-colors relative ${
+                dragDropPhotos.isDragging
+                  ? 'border-brand-400 bg-brand-800/70'
+                  : 'border-brand-700 hover:bg-brand-800/50'
+              }`}
+              {...dragDropPhotos}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                disabled={busy}
+                onChange={handleAddChildren}
+              />
+              <Plus className="w-3.5 h-3.5" />
+              {dragDropPhotos.isDragging ? 'Lepaskan foto' : 'Tambah foto'}
+            </label>
           </div>
+
+          {photos.length === 0 ? (
+            <p className="text-slate-600 text-[10px]">Belum ada foto tambahan — hanya sampul.</p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {photos.map((p) => (
+                <div
+                  key={p.id}
+                  className="relative group rounded-lg overflow-hidden border border-brand-800 aspect-video"
+                >
+                  <img src={p.image} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-brand-950/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                    <button
+                      type="button"
+                      title="Jadikan sampul album"
+                      disabled={busy}
+                      onClick={() => handleSetCoverFromChild(p.id)}
+                      className="p-1.5 rounded bg-brand-800 text-terminal-cyan hover:bg-brand-700"
+                    >
+                      <Star className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Hapus foto ini"
+                      disabled={busy}
+                      onClick={() => handleDeleteChild(p.id)}
+                      className="p-1.5 rounded bg-terminal-red/20 text-terminal-red hover:bg-terminal-red/30"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="flex justify-end gap-2 pt-2 border-t border-brand-800">
           <Button variant="ghost" type="button" onClick={onClose} disabled={busy}>

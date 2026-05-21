@@ -5,6 +5,7 @@ import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import { uploadBrandLogo } from '../../utils/supabaseApi';
 import { BrandLogo } from '../shared/BrandLogo';
+import { useDragDropUpload } from '../../hooks/useDragDropUpload';
 import { DEFAULT_BRAND } from '../../constants/brand';
 import { type SystemSettings } from '../../data/initialData';
 import { ShieldAlert, UserCircle, Globe, type LucideIcon } from 'lucide-react';
@@ -48,6 +49,65 @@ const LOGO_SLOTS: {
     fallback: UserCircle,
   },
 ];
+
+interface LogoUploadItemProps {
+  item: typeof LOGO_SLOTS[number];
+  src: string | null;
+  busy: boolean;
+  onUpload: (key: LogoKey, slot: UploadSlot, file: File) => void;
+  onClear: (key: LogoKey) => void;
+}
+
+const LogoUploadItem: React.FC<LogoUploadItemProps> = ({ item, src, busy, onUpload, onClear }) => {
+  const { key, slot, label, hint, fallback: Fallback } = item;
+  
+  const dragDrop = useDragDropUpload({
+    onFileSelect: (files) => {
+      if (files.length > 0) onUpload(key, slot, files[0]);
+    },
+    multiple: false,
+  });
+
+  return (
+    <div className="p-4 rounded-xl border border-brand-800 bg-brand-950/40 space-y-3">
+      <div className="flex items-start gap-3">
+        <BrandLogo src={src || undefined} size={48} fallback={Fallback} />
+        <div className="min-w-0">
+          <p className="text-white font-semibold text-xs">{label}</p>
+          <p className="text-[10px] text-slate-500">{hint}</p>
+        </div>
+      </div>
+      <label
+        {...dragDrop}
+        className={`block border-2 border-dashed rounded-lg p-3 text-center cursor-pointer transition-all ${
+          dragDrop.isDragging
+            ? 'border-brand-400 bg-brand-900/40'
+            : 'border-brand-800 hover:border-brand-600'
+        }`}
+      >
+        <input
+          type="file"
+          accept="image/*"
+          disabled={busy}
+          className="w-full text-[10px] text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-brand-800 file:text-white cursor-pointer"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) onUpload(key, slot, f);
+            e.target.value = '';
+          }}
+        />
+        {dragDrop.isDragging && (
+          <p className="mt-1 text-[10px] text-brand-300">Lepaskan untuk unggah</p>
+        )}
+      </label>
+      {src && (
+        <Button variant="ghost" size="sm" type="button" onClick={() => onClear(key)}>
+          Reset default
+        </Button>
+      )}
+    </div>
+  );
+};
 
 export const AdminBrandPanel: React.FC = () => {
   const { settings, updateSettings } = useApp();
@@ -106,42 +166,16 @@ export const AdminBrandPanel: React.FC = () => {
           Unggah PNG/JPG/SVG. Kosongkan untuk pakai ikon bawaan. Perubahan langsung ke seluruh web.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {LOGO_SLOTS.map(({ key, slot, label, hint, fallback }) => {
-            const src = settings[key];
-            const Fallback = fallback;
-            return (
-              <div
-                key={key}
-                className="p-4 rounded-xl border border-brand-800 bg-brand-950/40 space-y-3"
-              >
-                <div className="flex items-start gap-3">
-                  <BrandLogo src={src || undefined} size={48} fallback={Fallback} />
-                  <div className="min-w-0">
-                    <p className="text-white font-semibold text-xs">{label}</p>
-                    <p className="text-[10px] text-slate-500">{hint}</p>
-                  </div>
-                </div>
-                <label className="block">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    disabled={busy === key}
-                    className="w-full text-[10px] text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-brand-800 file:text-white"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) uploadLogo(key, slot, f);
-                      e.target.value = '';
-                    }}
-                  />
-                </label>
-                {src && (
-                  <Button variant="ghost" size="sm" type="button" onClick={() => clearLogo(key)}>
-                    Reset default
-                  </Button>
-                )}
-              </div>
-            );
-          })}
+          {LOGO_SLOTS.map((item) => (
+            <LogoUploadItem
+              key={item.key}
+              item={item}
+              src={settings[item.key]}
+              busy={busy === item.key}
+              onUpload={uploadLogo}
+              onClear={clearLogo}
+            />
+          ))}
         </div>
       </Card>
 

@@ -10,6 +10,7 @@ import { EmptyState } from '../components/shared/EmptyState';
 import { useToast } from '../context/ToastContext';
 import { type GalleryAlbum } from '../data/initialData';
 import { GalleryAlbumEditor } from '../components/gallery/GalleryAlbumEditor';
+import { useDragDropUpload } from '../hooks/useDragDropUpload';
 import { Image, Search, Plus, Calendar, Trash2, Eye, Layers, Pencil } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { softSpring, HOVER_LIFT_Y } from '../utils/animationConfig';
@@ -52,6 +53,18 @@ export const Gallery: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
 
   const reduced = prefersReducedMotion();
+
+  const handlePhotoFilesSelected = (files: File[]) => {
+    setFormPhotoFiles(files);
+    if (files.length > 0) {
+      setFormPreview(URL.createObjectURL(files[0]));
+    }
+  };
+
+  const { isDragging: isFormDragging, ...dragDropProps } = useDragDropUpload({
+    onFileSelect: handlePhotoFilesSelected,
+    multiple: true,
+  });
 
   const filteredAlbums = gallery.filter((album) => {
     const matchesSearch =
@@ -341,7 +354,14 @@ export const Gallery: React.FC = () => {
             <p className="text-[9px] text-slate-600 mb-1">
               File <strong>pertama</strong> = sampul di halaman. Sisanya masuk galeri saat dibuka.
             </p>
-            <div className="border border-dashed border-brand-800 rounded-lg p-6 bg-brand-950 text-center relative">
+            <div
+              {...dragDropProps}
+              className={`border-2 border-dashed rounded-lg p-6 bg-brand-950 text-center relative transition-all ${
+                isFormDragging
+                  ? 'border-brand-400 bg-brand-900 scale-[1.01]'
+                  : 'border-brand-800'
+              }`}
+            >
               <input
                 type="file"
                 accept="image/*"
@@ -356,9 +376,13 @@ export const Gallery: React.FC = () => {
                 <Image className="w-8 h-8 text-slate-500 mx-auto" />
               )}
               <span className="text-[10px] text-slate-400 block mt-2">
-                {formPhotoFiles.length > 0
-                  ? `${formPhotoFiles.length} file — #1 sampul, sisanya galeri`
-                  : 'Pilih banyak foto sekaligus'}
+                {isFormDragging ? (
+                  <span className="text-brand-300 font-bold">Lepaskan untuk pilih foto</span>
+                ) : formPhotoFiles.length > 0 ? (
+                  `${formPhotoFiles.length} file — #1 sampul, sisanya galeri`
+                ) : (
+                  'Drag & drop atau klik untuk pilih foto'
+                )}
               </span>
             </div>
           </div>

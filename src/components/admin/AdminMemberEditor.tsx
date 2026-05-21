@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import { uploadMemberPhoto } from '../../utils/supabaseApi';
+import { useDragDropUpload } from '../../hooks/useDragDropUpload';
 import { type Member } from '../../data/initialData';
 
 interface AdminMemberEditorProps {
@@ -60,6 +61,13 @@ export const AdminMemberEditor: React.FC<AdminMemberEditorProps> = ({
     reader.onloadend = () => setPhotoPreview(reader.result as string);
     reader.readAsDataURL(file);
   };
+
+  const dragDropPhoto = useDragDropUpload({
+    onFileSelect: (files) => {
+      if (files.length > 0) handlePhotoChange({ target: { files } } as any);
+    },
+    multiple: false,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -230,8 +238,29 @@ export const AdminMemberEditor: React.FC<AdminMemberEditorProps> = ({
 
           <div className="space-y-1">
             <label className="text-slate-400">FOTO PROFIL</label>
-            <div className="flex items-center gap-4 p-3 bg-brand-950/60 border border-brand-850 rounded-lg">
-              <input type="file" accept="image/*" onChange={handlePhotoChange} className="text-xs text-slate-400" />
+            <div
+              {...dragDropPhoto}
+              className={`flex items-center gap-4 p-3 rounded-lg transition-all border relative ${
+                dragDropPhoto.isDragging
+                  ? 'border-brand-400 bg-brand-900/60'
+                  : 'border-brand-850 bg-brand-950/60'
+              }`}
+            >
+              <div className="flex-1 relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <div className="text-xs text-slate-400 pointer-events-none">
+                  {dragDropPhoto.isDragging ? (
+                    <span className="text-brand-300 font-bold">Lepaskan untuk ganti foto</span>
+                  ) : (
+                    <span>Klik atau geser foto ke sini untuk ganti</span>
+                  )}
+                </div>
+              </div>
               <img
                 src={photoPreview || settings.logoPlaceholder}
                 alt=""
