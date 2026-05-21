@@ -64,6 +64,7 @@ interface AppContextType {
     category: GalleryAlbum['category'];
     coverImage: string;
     childImageUrls: string[];
+    date?: string;
   }) => Promise<void>;
   deleteGallery: (id: string) => Promise<void>;
   updateGalleryAlbum: (
