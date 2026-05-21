@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { uploadGalleryPhoto } from '../utils/supabaseApi';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
@@ -23,37 +24,52 @@ export const Gallery: React.FC = () => {
   const [formDesc, setFormDesc] = useState('');
   const [formCategory, setFormCategory] = useState<'Practicum' | 'Event' | 'Exam' | 'Classroom'>('Practicum');
   const [formImage, setFormImage] = useState('/hu-tao-placeholder.png');
+  const [formPhotoFile, setFormPhotoFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const openAddModal = () => {
     setFormTitle('');
     setFormDesc('');
     setFormCategory('Practicum');
     setFormImage('/hu-tao-placeholder.png');
+    setFormPhotoFile(null);
     setIsAddModalOpen(true);
   };
 
-  const handleSimulatedUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Simulating file upload, setting the image to our placeholder
-    if (e.target.files && e.target.files[0]) {
-      toast('Simulated file upload complete. File parsed: ' + e.target.files[0].name, 'info');
-      setFormImage('/hu-tao-placeholder.png');
-    }
+  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFormPhotoFile(file);
+    setFormImage(URL.createObjectURL(file));
   };
 
-  const handleAddGallery = (e: React.FormEvent) => {
+  const handleAddGallery = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle.trim() || !formDesc.trim()) {
       toast('Title and description are required metadata', 'warning');
       return;
     }
-    addGallery({
-      title: formTitle,
-      category: formCategory,
-      description: formDesc,
-      image: formImage
-    });
-    setIsAddModalOpen(false);
-    toast(`Media "${formTitle}" added to classroom archive`, 'success');
+
+    setIsUploading(true);
+    let imageUrl = formImage;
+
+    try {
+      if (formPhotoFile) {
+        imageUrl = await uploadGalleryPhoto(formPhotoFile);
+      }
+      await addGallery({
+        title: formTitle,
+        category: formCategory,
+        description: formDesc,
+        image: imageUrl,
+      });
+      setIsAddModalOpen(false);
+      toast(`Media "${formTitle}" added to classroom archive`, 'success');
+    } catch (err: any) {
+      toast(`Upload failed: ${err.message}`, 'error');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDeleteGallery = (e: React.MouseEvent, id: string, title: string) => {
@@ -264,23 +280,29 @@ export const Gallery: React.FC = () => {
           </div>
 
           <div className="space-y-1">
-            <label className="text-slate-400">IMAGE FILE UPLOADER (SIMULATION)</label>
+            <label className="text-slate-400">IMAGE FILE UPLOADER</label>
             <div className="border border-dashed border-brand-800 rounded-lg p-6 bg-brand-950 text-center flex flex-col items-center justify-center gap-2 cursor-pointer hover:border-brand-500/50 transition-colors relative">
               <input
                 type="file"
                 accept="image/*"
-                onChange={handleSimulatedUpload}
+                onChange={handlePhotoSelect}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
-              <Image className="w-8 h-8 text-slate-500" />
-              <span className="text-[10px] text-slate-400">Click to choose image or drag & drop</span>
-              <span className="text-[9px] text-slate-600">Supports PNG, JPG, WEBP (Mock uploads fallback to Hu Tao placeholder)</span>
+              {formImage !== '/hu-tao-placeholder.png' ? (
+                <img src={formImage} alt="Preview" className="max-h-24 rounded object-cover" />
+              ) : (
+                <Image className="w-8 h-8 text-slate-500" />
+              )}
+              <span className="text-[10px] text-slate-400">Click to choose image (uploads to Supabase gallery-photos)</span>
+              <span className="text-[9px] text-slate-600">PNG, JPG, WEBP — max 10 MB</span>
             </div>
           </div>
 
           <div className="flex justify-end gap-2 pt-4">
             <Button variant="ghost" type="button" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-            <Button variant="primary" type="submit">Catalog Asset</Button>
+            <Button variant="primary" type="submit" disabled={isUploading}>
+              {isUploading ? 'Uploading...' : 'Catalog Asset'}
+            </Button>
           </div>
         </form>
       </Modal>

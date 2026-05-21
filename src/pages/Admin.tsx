@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useToast } from '../context/ToastContext';
-import { uploadMemberPhoto } from '../utils/supabaseApi';
+import { uploadMemberPhoto, uploadSiteAsset } from '../utils/supabaseApi';
 import { 
   ShieldAlert, Lock, Eye, EyeOff, Trash2, RefreshCw
 } from 'lucide-react';
@@ -373,6 +373,28 @@ export const Admin: React.FC = () => {
             <Card title="Canvas Customization Panel">
               <div className="space-y-6 font-mono text-xs">
                 
+                {settings.backgroundType === 'image' && (
+                  <div className="space-y-2">
+                    <label className="text-slate-400">BACKGROUND_IMAGE_UPLOAD</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="w-full text-xs text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-brand-800 file:text-white"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        try {
+                          const url = await uploadSiteAsset(file);
+                          updateSettings({ backgroundType: 'image', backgroundImage: url });
+                          toast('Background image uploaded to site-assets', 'success');
+                        } catch (err: any) {
+                          toast(`Upload failed: ${err.message}`, 'error');
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+
                 {/* Background Type */}
                 <div className="space-y-2">
                   <label className="text-slate-400">BACKGROUND_MATRICES</label>

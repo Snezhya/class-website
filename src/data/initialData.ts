@@ -60,6 +60,7 @@ export interface SystemSettings {
   theme: 'dark-navy' | 'dark-slate' | 'pure-black';
   accentColor: '#3b82f6' | '#10b981' | '#f59e0b' | '#ef4444' | '#8b5cf6' | '#06b6d4';
   backgroundType: 'gradient' | 'grid' | 'dot' | 'image';
+  backgroundImage: string;
   blurIntensity: number; // 0 to 20px
   opacity: number; // 0 to 100
   glowAmount: number; // 0 to 100
@@ -364,6 +365,7 @@ export const defaultSettings: SystemSettings = {
   theme: 'dark-navy',
   accentColor: '#3b82f6',
   backgroundType: 'dot',
+  backgroundImage: '/hu-tao-placeholder.png',
   blurIntensity: 8,
   opacity: 85,
   glowAmount: 40,

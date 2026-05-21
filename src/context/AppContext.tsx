@@ -5,7 +5,15 @@ import {
 } from '../data/initialData';
 import { storage } from '../utils/storage';
 import { supabase } from '../lib/supabase';
-import { fetchMembers, addMemberDb, editMemberDb, deleteMemberDb, mapDbToMember } from '../utils/supabaseApi';
+import {
+  fetchMembers, addMemberDb, editMemberDb, deleteMemberDb, mapDbToMember,
+  fetchTasks, addTaskDb, editTaskDb, deleteTaskDb, mapDbToTask,
+  fetchSchedules, addScheduleDb, editScheduleDb, deleteScheduleDb, mapDbToSchedule,
+  fetchNotes, addNoteDb, editNoteDb, deleteNoteDb, mapDbToNote,
+  fetchGallery, addGalleryDb, editGalleryDb, deleteGalleryDb, mapDbToGallery,
+  fetchSettings, updateSettingsDb, resetSettingsDb, mapDbToSettings,
+  fetchActivityLogs, addActivityLogDb,
+} from '../utils/supabaseApi';
 
 interface AppContextType {
   members: Member[];
@@ -30,25 +38,25 @@ interface AppContextType {
   reorderMembers: (members: Member[]) => Promise<void>;
 
   // Task CRUD
-  addTask: (task: Omit<Task, 'id'>) => void;
-  editTask: (id: string, task: Partial<Task>) => void;
-  deleteTask: (id: string) => void;
-  toggleTaskCompleted: (id: string) => void;
+  addTask: (task: Omit<Task, 'id'>) => Promise<void>;
+  editTask: (id: string, task: Partial<Task>) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
+  toggleTaskCompleted: (id: string) => Promise<void>;
 
   // Schedule CRUD
-  addSchedule: (item: Omit<ScheduleItem, 'id'>) => void;
-  editSchedule: (id: string, item: Partial<ScheduleItem>) => void;
-  deleteSchedule: (id: string) => void;
+  addSchedule: (item: Omit<ScheduleItem, 'id'>) => Promise<void>;
+  editSchedule: (id: string, item: Partial<ScheduleItem>) => Promise<void>;
+  deleteSchedule: (id: string) => Promise<void>;
 
   // Notes CRUD
-  addNote: (note: Omit<ClassNote, 'id' | 'date'>) => void;
-  editNote: (id: string, note: Partial<ClassNote>) => void;
-  deleteNote: (id: string) => void;
+  addNote: (note: Omit<ClassNote, 'id' | 'date'>) => Promise<void>;
+  editNote: (id: string, note: Partial<ClassNote>) => Promise<void>;
+  deleteNote: (id: string) => Promise<void>;
 
   // Gallery CRUD
-  addGallery: (item: Omit<GalleryItem, 'id' | 'date'>) => void;
-  editGallery: (id: string, item: Partial<GalleryItem>) => void;
-  deleteGallery: (id: string) => void;
+  addGallery: (item: Omit<GalleryItem, 'id' | 'date'>) => Promise<void>;
+  editGallery: (id: string, item: Partial<GalleryItem>) => Promise<void>;
+  deleteGallery: (id: string) => Promise<void>;
 
   // Settings
   updateSettings: (settings: Partial<SystemSettings>) => void;
@@ -61,15 +69,14 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize States from storage or default
+  // Initialize States
   const [members, setMembers] = useState<Member[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
+  const [notes, setNotes] = useState<ClassNote[]>([]);
+  const [gallery, setGallery] = useState<GalleryItem[]>([]);
   const [dbLoading, setDbLoading] = useState<boolean>(true);
   const [dbError, setDbError] = useState<string | null>(null);
-
-  const [tasks, setTasks] = useState<Task[]>(() => storage.get('tasks', initialTasks));
-  const [schedules, setSchedules] = useState<ScheduleItem[]>(() => storage.get('schedules', initialSchedule));
-  const [notes, setNotes] = useState<ClassNote[]>(() => storage.get('notes', initialNotes));
-  const [gallery, setGallery] = useState<GalleryItem[]>(() => storage.get('gallery', initialGallery));
   const [settings, setSettings] = useState<SystemSettings>(() => storage.get('settings', defaultSettings));
   const [isAdmin, setIsAdmin] = useState<boolean>(() => storage.get('is_admin_session', false));
   const [activityLogs, setActivityLogs] = useState<string[]>(() => 
@@ -79,6 +86,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       `[${new Date().toISOString().split('T')[0]} 08:32:12] AUTH DAEMON: Session listener listening on auth_session_init.sh`
     ])
   );
+
+  const hasSupabase = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
 
   // Log action helper
   const addActivityLog = (message: string) => {
@@ -90,83 +99,138 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       storage.set('activity_logs', updated);
       return updated;
     });
+    if (hasSupabase) {
+      addActivityLogDb(logEntry).catch(() => {});
+    }
   };
 
-  // 1. Initial Member Fetch and Realtime Listener Setup
+  // 1. Fetch ALL entities from Supabase on mount + setup Realtime listeners
   useEffect(() => {
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-    const loadMembers = async () => {
-      if (!supabaseUrl || !supabaseAnonKey) {
-        // Fallback to local storage or initial data
-        const local = storage.get('members', initialMembers);
-        setMembers(local);
-        setDbLoading(false);
-        addActivityLog('SYSTEM DAEMON: Supabase credentials not found. Falling back to Local Roster.');
-        return;
-      }
-
-      setDbLoading(true);
-      try {
-        const data = await fetchMembers();
-        setMembers(data);
-        storage.set('members', data); // cache locally
-        setDbError(null);
-        addActivityLog('MEMBER DAEMON: Fetched roster from Supabase.');
-      } catch (err: any) {
-        setDbError(err.message);
-        addActivityLog(`MEMBER DAEMON: Failed to fetch remote roster - ${err.message}`);
-        // Fallback
-        const local = storage.get('members', initialMembers);
-        setMembers(local);
-      } finally {
-        setDbLoading(false);
-      }
-    };
-
-    loadMembers();
-
-    // Setup Realtime websocket listener if configured
-    let channel: any = null;
-    if (supabaseUrl && supabaseAnonKey) {
-      channel = supabase
-        .channel('public:member')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'member' }, (payload) => {
-          const { eventType, new: newRow, old: oldRow } = payload;
-          addActivityLog(`REALTIME DAEMON: Member record changed [${eventType}]`);
-
-          if (eventType === 'INSERT') {
-            const addedMember = mapDbToMember(newRow);
-            setMembers(prev => {
-              if (prev.some(m => m.id === addedMember.id)) return prev;
-              const updated = [...prev, addedMember].sort((a, b) => a.order - b.order);
-              storage.set('members', updated);
-              return updated;
-            });
-          } else if (eventType === 'UPDATE') {
-            const updatedMember = mapDbToMember(newRow);
-            setMembers(prev => {
-              const updated = prev.map(m => m.id === updatedMember.id ? updatedMember : m).sort((a, b) => a.order - b.order);
-              storage.set('members', updated);
-              return updated;
-            });
-          } else if (eventType === 'DELETE') {
-            const deletedId = oldRow.id.toString();
-            setMembers(prev => {
-              const updated = prev.filter(m => m.id !== deletedId);
-              storage.set('members', updated);
-              return updated;
-            });
-          }
-        })
-        .subscribe();
+    if (!supabaseUrl || !supabaseAnonKey) {
+      // Offline fallback: load everything from localStorage / initial data
+      setMembers(storage.get('members', initialMembers));
+      setTasks(storage.get('tasks', initialTasks));
+      setSchedules(storage.get('schedules', initialSchedule));
+      setNotes(storage.get('notes', initialNotes));
+      setGallery(storage.get('gallery', initialGallery));
+      setDbLoading(false);
+      addActivityLog('SYSTEM DAEMON: Supabase credentials not found. Offline mode active.');
+      return;
     }
 
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
+    setDbLoading(true);
+    Promise.all([
+      fetchMembers().catch((e: any) => { console.warn('member fetch', e); return storage.get('members', initialMembers); }),
+      fetchTasks().catch((e: any) => { console.warn('task fetch', e); return storage.get('tasks', initialTasks); }),
+      fetchSchedules().catch((e: any) => { console.warn('schedule fetch', e); return storage.get('schedules', initialSchedule); }),
+      fetchNotes().catch((e: any) => { console.warn('note fetch', e); return storage.get('notes', initialNotes); }),
+      fetchGallery().catch((e: any) => { console.warn('gallery fetch', e); return storage.get('gallery', initialGallery); }),
+      fetchSettings().catch(() => storage.get('settings', defaultSettings)),
+      fetchActivityLogs().catch(() => storage.get('activity_logs', [])),
+    ]).then(([mems, tsks, scheds, nts, gals, sets, logs]) => {
+      setMembers(mems); storage.set('members', mems);
+      setTasks(tsks); storage.set('tasks', tsks);
+      setSchedules(scheds); storage.set('schedules', scheds);
+      setNotes(nts); storage.set('notes', nts);
+      setGallery(gals); storage.set('gallery', gals);
+      setSettings(sets); storage.set('settings', sets);
+      if (logs.length > 0) {
+        setActivityLogs(logs);
+        storage.set('activity_logs', logs);
       }
+      setDbError(null);
+      addActivityLog('SYSTEM DAEMON: All tables loaded from Supabase successfully.');
+    }).catch((err: any) => {
+      setDbError(err.message);
+    }).finally(() => setDbLoading(false));
+
+    // Realtime: member
+    const memberChannel = supabase
+      .channel('rt:member')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'member' }, ({ eventType, new: n, old: o }) => {
+        addActivityLog(`REALTIME: member [${eventType}]`);
+        if (eventType === 'INSERT') setMembers(p => { const r = mapDbToMember(n); return p.some(x => x.id === r.id) ? p : [...p, r].sort((a,b)=>a.order-b.order); });
+        else if (eventType === 'UPDATE') setMembers(p => p.map(x => x.id === n.id?.toString() ? mapDbToMember(n) : x).sort((a,b)=>a.order-b.order));
+        else if (eventType === 'DELETE') setMembers(p => p.filter(x => x.id !== o.id?.toString()));
+      }).subscribe();
+
+    // Realtime: task
+    const taskChannel = supabase
+      .channel('rt:task')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'task' }, ({ eventType, new: n, old: o }) => {
+        addActivityLog(`REALTIME: task [${eventType}]`);
+        if (eventType === 'INSERT') setTasks(p => { const r = mapDbToTask(n); return p.some(x => x.id === r.id) ? p : [r, ...p]; });
+        else if (eventType === 'UPDATE') setTasks(p => p.map(x => x.id === n.id?.toString() ? mapDbToTask(n) : x));
+        else if (eventType === 'DELETE') setTasks(p => p.filter(x => x.id !== o.id?.toString()));
+      }).subscribe();
+
+    // Realtime: schedule
+    const scheduleChannel = supabase
+      .channel('rt:schedule')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'schedule' }, ({ eventType, new: n, old: o }) => {
+        addActivityLog(`REALTIME: schedule [${eventType}]`);
+        const dayOrder = ['Senin','Selasa','Rabu','Kamis','Jumat'];
+        if (eventType === 'INSERT') setSchedules(p => { const r = mapDbToSchedule(n); return p.some(x => x.id === r.id) ? p : [...p, r].sort((a,b)=>dayOrder.indexOf(a.day)-dayOrder.indexOf(b.day)); });
+        else if (eventType === 'UPDATE') setSchedules(p => p.map(x => x.id === n.id?.toString() ? mapDbToSchedule(n) : x).sort((a,b)=>dayOrder.indexOf(a.day)-dayOrder.indexOf(b.day)));
+        else if (eventType === 'DELETE') setSchedules(p => p.filter(x => x.id !== o.id?.toString()));
+      }).subscribe();
+
+    // Realtime: note
+    const noteChannel = supabase
+      .channel('rt:note')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'note' }, ({ eventType, new: n, old: o }) => {
+        addActivityLog(`REALTIME: note [${eventType}]`);
+        if (eventType === 'INSERT') setNotes(p => { const r = mapDbToNote(n); return p.some(x => x.id === r.id) ? p : [r, ...p]; });
+        else if (eventType === 'UPDATE') setNotes(p => p.map(x => x.id === n.id?.toString() ? mapDbToNote(n) : x));
+        else if (eventType === 'DELETE') setNotes(p => p.filter(x => x.id !== o.id?.toString()));
+      }).subscribe();
+
+    // Realtime: gallery
+    const galleryChannel = supabase
+      .channel('rt:gallery')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'gallery' }, ({ eventType, new: n, old: o }) => {
+        addActivityLog(`REALTIME: gallery [${eventType}]`);
+        if (eventType === 'INSERT') setGallery(p => { const r = mapDbToGallery(n); return p.some(x => x.id === r.id) ? p : [r, ...p]; });
+        else if (eventType === 'UPDATE') setGallery(p => p.map(x => x.id === n.id?.toString() ? mapDbToGallery(n) : x));
+        else if (eventType === 'DELETE') setGallery(p => p.filter(x => x.id !== o.id?.toString()));
+      }).subscribe();
+
+    const settingsChannel = supabase
+      .channel('rt:app_settings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'app_settings' }, ({ eventType, new: n }) => {
+        if (eventType === 'UPDATE' || eventType === 'INSERT') {
+          const s = mapDbToSettings(n);
+          setSettings(s);
+          storage.set('settings', s);
+        }
+      }).subscribe();
+
+    const logChannel = supabase
+      .channel('rt:activity_log')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, ({ new: n }) => {
+        const d = new Date(n.created_at);
+        const dateStr = d.toISOString().split('T')[0];
+        const timeStr = d.toLocaleTimeString('id-ID');
+        const entry = n.message?.startsWith('[') ? n.message : `[${dateStr} ${timeStr}] ${n.message}`;
+        setActivityLogs(p => {
+          if (p[0] === entry) return p;
+          const updated = [entry, ...p.slice(0, 49)];
+          storage.set('activity_logs', updated);
+          return updated;
+        });
+      }).subscribe();
+
+    return () => {
+      supabase.removeChannel(memberChannel);
+      supabase.removeChannel(taskChannel);
+      supabase.removeChannel(scheduleChannel);
+      supabase.removeChannel(noteChannel);
+      supabase.removeChannel(galleryChannel);
+      supabase.removeChannel(settingsChannel);
+      supabase.removeChannel(logChannel);
     };
   }, []);
 
@@ -202,11 +266,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   }, []);
 
-  // Sync state variables to storage when local updates occur
-  useEffect(() => { storage.set('tasks', tasks); }, [tasks]);
-  useEffect(() => { storage.set('schedules', schedules); }, [schedules]);
-  useEffect(() => { storage.set('notes', notes); }, [notes]);
-  useEffect(() => { storage.set('gallery', gallery); }, [gallery]);
+  // Sync settings & session to localStorage
   useEffect(() => { storage.set('settings', settings); }, [settings]);
   useEffect(() => { storage.set('is_admin_session', isAdmin); }, [isAdmin]);
 
@@ -384,106 +444,205 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Task Operations
-  const addTask = (newTask: Omit<Task, 'id'>) => {
-    const id = Math.random().toString(36).substring(2, 9);
-    const task: Task = { ...newTask, id };
-    setTasks(prev => [...prev, task]);
-    addActivityLog(`TASK DAEMON: Created task '${task.title}' with priority [${task.priority}]`);
+  const addTask = async (newTask: Omit<Task, 'id'>) => {
+    if (hasSupabase) {
+      try {
+        const added = await addTaskDb(newTask);
+        setTasks(prev => prev.some(t => t.id === added.id) ? prev : [added, ...prev]);
+        addActivityLog(`TASK DAEMON: Created task '${added.title}' [${added.priority}] → Supabase`);
+      } catch (err: any) { addActivityLog(`TASK DAEMON: Insert error - ${err.message}`); throw err; }
+    } else {
+      const task: Task = { ...newTask, id: Math.random().toString(36).substring(2, 9) };
+      setTasks(prev => [task, ...prev]);
+      addActivityLog(`TASK DAEMON: Created task '${task.title}' locally.`);
+    }
   };
 
-  const editTask = (id: string, updatedData: Partial<Task>) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updatedData } : t));
+  const editTask = async (id: string, updatedData: Partial<Task>) => {
+    if (hasSupabase) {
+      try {
+        const updated = await editTaskDb(id, updatedData);
+        setTasks(prev => prev.map(t => t.id === id ? updated : t));
+        addActivityLog(`TASK DAEMON: Edited task '${updated.title}' → Supabase`);
+      } catch (err: any) { addActivityLog(`TASK DAEMON: Update error - ${err.message}`); throw err; }
+    } else {
+      setTasks(prev => prev.map(t => t.id === id ? { ...t, ...updatedData } : t));
+      addActivityLog(`TASK DAEMON: Edited task '${id}' locally.`);
+    }
+  };
+
+  const deleteTask = async (id: string) => {
     const task = tasks.find(t => t.id === id);
-    addActivityLog(`TASK DAEMON: Edited task data '${task?.title || id}'`);
+    if (hasSupabase) {
+      try {
+        await deleteTaskDb(id);
+        setTasks(prev => prev.filter(t => t.id !== id));
+        addActivityLog(`TASK DAEMON: Deleted task '${task?.title || id}' → Supabase`);
+      } catch (err: any) { addActivityLog(`TASK DAEMON: Delete error - ${err.message}`); throw err; }
+    } else {
+      setTasks(prev => prev.filter(t => t.id !== id));
+      addActivityLog(`TASK DAEMON: Deleted task '${task?.title || id}' locally.`);
+    }
   };
 
-  const deleteTask = (id: string) => {
+  const toggleTaskCompleted = async (id: string) => {
     const task = tasks.find(t => t.id === id);
-    setTasks(prev => prev.filter(t => t.id !== id));
-    addActivityLog(`TASK DAEMON: Terminated task '${task?.title || id}'`);
-  };
-
-  const toggleTaskCompleted = (id: string) => {
-    setTasks(prev => prev.map(t => {
-      if (t.id === id) {
-        const newStatus = t.status === 'completed' ? 'pending' : 'completed';
-        addActivityLog(`TASK DAEMON: Set task '${t.title}' status to ${newStatus.toUpperCase()}`);
-        return { ...t, status: newStatus };
-      }
-      return t;
-    }));
+    if (!task) return;
+    const newStatus = task.status === 'completed' ? 'pending' : 'completed';
+    addActivityLog(`TASK DAEMON: Set task '${task.title}' → ${newStatus.toUpperCase()}`);
+    await editTask(id, { status: newStatus });
   };
 
   // Schedule Operations
-  const addSchedule = (newItem: Omit<ScheduleItem, 'id'>) => {
-    const id = Math.random().toString(36).substring(2, 9);
-    const item: ScheduleItem = { ...newItem, id };
-    setSchedules(prev => [...prev, item]);
-    addActivityLog(`SCHEDULE DAEMON: Appended subject '${item.subject}' on ${item.day}`);
+  const addSchedule = async (newItem: Omit<ScheduleItem, 'id'>) => {
+    if (hasSupabase) {
+      try {
+        const added = await addScheduleDb(newItem);
+        const dayOrder = ['Senin','Selasa','Rabu','Kamis','Jumat'];
+        setSchedules(prev => prev.some(s => s.id === added.id) ? prev : [...prev, added].sort((a,b) => dayOrder.indexOf(a.day) - dayOrder.indexOf(b.day)));
+        addActivityLog(`SCHEDULE DAEMON: Added '${added.subject}' on ${added.day} → Supabase`);
+      } catch (err: any) { addActivityLog(`SCHEDULE DAEMON: Insert error - ${err.message}`); throw err; }
+    } else {
+      const item: ScheduleItem = { ...newItem, id: Math.random().toString(36).substring(2, 9) };
+      setSchedules(prev => [...prev, item]);
+      addActivityLog(`SCHEDULE DAEMON: Added '${item.subject}' locally.`);
+    }
   };
 
-  const editSchedule = (id: string, updatedData: Partial<ScheduleItem>) => {
-    setSchedules(prev => prev.map(s => s.id === id ? { ...s, ...updatedData } : s));
-    const item = schedules.find(s => s.id === id);
-    addActivityLog(`SCHEDULE DAEMON: Adjusted schedule details for '${item?.subject || id}'`);
+  const editSchedule = async (id: string, updatedData: Partial<ScheduleItem>) => {
+    if (hasSupabase) {
+      try {
+        const updated = await editScheduleDb(id, updatedData);
+        setSchedules(prev => prev.map(s => s.id === id ? updated : s));
+        addActivityLog(`SCHEDULE DAEMON: Updated '${updated.subject}' → Supabase`);
+      } catch (err: any) { addActivityLog(`SCHEDULE DAEMON: Update error - ${err.message}`); throw err; }
+    } else {
+      setSchedules(prev => prev.map(s => s.id === id ? { ...s, ...updatedData } : s));
+      addActivityLog(`SCHEDULE DAEMON: Updated schedule '${id}' locally.`);
+    }
   };
 
-  const deleteSchedule = (id: string) => {
+  const deleteSchedule = async (id: string) => {
     const item = schedules.find(s => s.id === id);
-    setSchedules(prev => prev.filter(s => s.id !== id));
-    addActivityLog(`SCHEDULE DAEMON: Excised schedule slot for '${item?.subject || id}'`);
+    if (hasSupabase) {
+      try {
+        await deleteScheduleDb(id);
+        setSchedules(prev => prev.filter(s => s.id !== id));
+        addActivityLog(`SCHEDULE DAEMON: Deleted '${item?.subject || id}' → Supabase`);
+      } catch (err: any) { addActivityLog(`SCHEDULE DAEMON: Delete error - ${err.message}`); throw err; }
+    } else {
+      setSchedules(prev => prev.filter(s => s.id !== id));
+      addActivityLog(`SCHEDULE DAEMON: Deleted schedule '${item?.subject || id}' locally.`);
+    }
   };
 
   // Notes & Announcement Operations
-  const addNote = (newNote: Omit<ClassNote, 'id' | 'date'>) => {
-    const id = Math.random().toString(36).substring(2, 9);
+  const addNote = async (newNote: Omit<ClassNote, 'id' | 'date'>) => {
     const date = new Date().toISOString().split('T')[0];
-    const note: ClassNote = { ...newNote, id, date };
-    setNotes(prev => [note, ...prev]);
-    addActivityLog(`NOTE DAEMON: Broadcasted new ${note.type} '${note.title}'`);
+    if (hasSupabase) {
+      try {
+        const added = await addNoteDb({ ...newNote, date });
+        setNotes(prev => prev.some(n => n.id === added.id) ? prev : [added, ...prev]);
+        addActivityLog(`NOTE DAEMON: Broadcasted '${added.title}' → Supabase`);
+      } catch (err: any) { addActivityLog(`NOTE DAEMON: Insert error - ${err.message}`); throw err; }
+    } else {
+      const note: ClassNote = { ...newNote, date, id: Math.random().toString(36).substring(2, 9) };
+      setNotes(prev => [note, ...prev]);
+      addActivityLog(`NOTE DAEMON: Broadcasted '${note.title}' locally.`);
+    }
   };
 
-  const editNote = (id: string, updatedData: Partial<ClassNote>) => {
-    setNotes(prev => prev.map(n => n.id === id ? { ...n, ...updatedData } : n));
-    const note = notes.find(n => n.id === id);
-    addActivityLog(`NOTE DAEMON: Amended note/announcement '${note?.title || id}'`);
+  const editNote = async (id: string, updatedData: Partial<ClassNote>) => {
+    if (hasSupabase) {
+      try {
+        const updated = await editNoteDb(id, updatedData);
+        setNotes(prev => prev.map(n => n.id === id ? updated : n));
+        addActivityLog(`NOTE DAEMON: Amended '${updated.title}' → Supabase`);
+      } catch (err: any) { addActivityLog(`NOTE DAEMON: Update error - ${err.message}`); throw err; }
+    } else {
+      setNotes(prev => prev.map(n => n.id === id ? { ...n, ...updatedData } : n));
+      addActivityLog(`NOTE DAEMON: Amended note '${id}' locally.`);
+    }
   };
 
-  const deleteNote = (id: string) => {
+  const deleteNote = async (id: string) => {
     const note = notes.find(n => n.id === id);
-    setNotes(prev => prev.filter(n => n.id !== id));
-    addActivityLog(`NOTE DAEMON: Deleted announcement '${note?.title || id}'`);
+    if (hasSupabase) {
+      try {
+        await deleteNoteDb(id);
+        setNotes(prev => prev.filter(n => n.id !== id));
+        addActivityLog(`NOTE DAEMON: Deleted '${note?.title || id}' → Supabase`);
+      } catch (err: any) { addActivityLog(`NOTE DAEMON: Delete error - ${err.message}`); throw err; }
+    } else {
+      setNotes(prev => prev.filter(n => n.id !== id));
+      addActivityLog(`NOTE DAEMON: Deleted note '${note?.title || id}' locally.`);
+    }
   };
 
   // Gallery Operations
-  const addGallery = (newItem: Omit<GalleryItem, 'id' | 'date'>) => {
-    const id = Math.random().toString(36).substring(2, 9);
+  const addGallery = async (newItem: Omit<GalleryItem, 'id' | 'date'>) => {
     const date = new Date().toISOString().split('T')[0];
-    const item: GalleryItem = { ...newItem, id, date };
-    setGallery(prev => [item, ...prev]);
-    addActivityLog(`GALLERY DAEMON: Cataloged media asset '${item.title}'`);
+    if (hasSupabase) {
+      try {
+        const added = await addGalleryDb({ ...newItem, date });
+        setGallery(prev => prev.some(g => g.id === added.id) ? prev : [added, ...prev]);
+        addActivityLog(`GALLERY DAEMON: Cataloged '${added.title}' → Supabase`);
+      } catch (err: any) { addActivityLog(`GALLERY DAEMON: Insert error - ${err.message}`); throw err; }
+    } else {
+      const item: GalleryItem = { ...newItem, date, id: Math.random().toString(36).substring(2, 9) };
+      setGallery(prev => [item, ...prev]);
+      addActivityLog(`GALLERY DAEMON: Cataloged '${item.title}' locally.`);
+    }
   };
 
-  const editGallery = (id: string, updatedData: Partial<GalleryItem>) => {
-    setGallery(prev => prev.map(g => g.id === id ? { ...g, ...updatedData } : g));
-    const item = gallery.find(g => g.id === id);
-    addActivityLog(`GALLERY DAEMON: Updated metadata for '${item?.title || id}'`);
+  const editGallery = async (id: string, updatedData: Partial<GalleryItem>) => {
+    if (hasSupabase) {
+      try {
+        const updated = await editGalleryDb(id, updatedData);
+        setGallery(prev => prev.map(g => g.id === id ? updated : g));
+        addActivityLog(`GALLERY DAEMON: Updated '${updated.title}' → Supabase`);
+      } catch (err: any) { addActivityLog(`GALLERY DAEMON: Update error - ${err.message}`); throw err; }
+    } else {
+      setGallery(prev => prev.map(g => g.id === id ? { ...g, ...updatedData } : g));
+      addActivityLog(`GALLERY DAEMON: Updated gallery '${id}' locally.`);
+    }
   };
 
-  const deleteGallery = (id: string) => {
+  const deleteGallery = async (id: string) => {
     const item = gallery.find(g => g.id === id);
-    setGallery(prev => prev.filter(g => g.id !== id));
-    addActivityLog(`GALLERY DAEMON: Erased media item '${item?.title || id}'`);
+    if (hasSupabase) {
+      try {
+        await deleteGalleryDb(id);
+        setGallery(prev => prev.filter(g => g.id !== id));
+        addActivityLog(`GALLERY DAEMON: Erased '${item?.title || id}' → Supabase`);
+      } catch (err: any) { addActivityLog(`GALLERY DAEMON: Delete error - ${err.message}`); throw err; }
+    } else {
+      setGallery(prev => prev.filter(g => g.id !== id));
+      addActivityLog(`GALLERY DAEMON: Erased '${item?.title || id}' locally.`);
+    }
   };
 
   // Settings Panel Actions
   const updateSettings = (newSettings: Partial<SystemSettings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
+    setSettings(prev => {
+      const merged = { ...prev, ...newSettings };
+      storage.set('settings', merged);
+      if (hasSupabase) {
+        updateSettingsDb(merged).catch((err: any) => {
+          console.warn('settings update', err);
+        });
+      }
+      return merged;
+    });
     addActivityLog('SYSTEM DAEMON: Global environment preferences updated');
   };
 
   const resetSettings = () => {
     setSettings(defaultSettings);
+    storage.set('settings', defaultSettings);
+    if (hasSupabase) {
+      resetSettingsDb().catch((err: any) => console.warn('settings reset', err));
+    }
     addActivityLog('SYSTEM DAEMON: Reverted configurations to default parameters');
   };
 

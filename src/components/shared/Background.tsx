@@ -24,7 +24,7 @@ export const Background: React.FC = () => {
     };
 
     if (settings.backgroundType === 'image') {
-      styles.backgroundImage = `url('/hu-tao-placeholder.png')`;
+      styles.backgroundImage = `url('${settings.backgroundImage || '/hu-tao-placeholder.png'}')`;
       styles.filter = `blur(${settings.blurIntensity}px) brightness(0.2)`;
     }
 
