@@ -4,61 +4,63 @@ import { useApp } from '../context/AppContext';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { ActivityLogs } from '../components/shared/ActivityLogs';
+import { AttendanceMarquee } from '../components/attendance/AttendanceMarquee';
 import { 
   Terminal, Users, FileText, Image, 
-  Wifi, Bell, ShieldCheck, ArrowRight, Clock
+  Wifi, Bell, ShieldCheck, ArrowRight, Clock, ClipboardList
 } from 'lucide-react';
 import { animate } from 'animejs';
-import gsap from 'gsap';
+import { useGsapScrollReveal } from '../hooks/useGsapScrollReveal';
+import { useGsapHero } from '../hooks/useGsapHero';
+import { useAnimeCounter } from '../hooks/useAnimeCounter';
+import { MotionCard } from '../components/motion/MotionCard';
+import { ScrollReveal } from '../components/motion/ScrollReveal';
+import { GSAP_HERO_CLASS, ANIM_LAYER } from '../utils/animationLayers';
+import { prefersReducedMotion } from '../utils/galleryUtils';
 
 
 export const Home: React.FC = () => {
   const { members, tasks, schedules, notes, gallery, settings, isAdmin } = useApp();
   const navigate = useNavigate();
+  const pageRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
+  const statusDotRef = useRef<HTMLSpanElement>(null);
 
-  // Stagger reveal animations on load (GSAP)
-  useEffect(() => {
-    if (heroRef.current) {
-      gsap.fromTo(
-        heroRef.current.querySelectorAll('.gsap-reveal'),
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.8, stagger: 0.15, ease: 'power3.out' }
-      );
-    }
-  }, []);
-
-  // Anime.js count-up counters
   const totalStudents = members.length;
-  const completedTasks = tasks.filter(t => t.status === 'completed').length;
-  const pendingTasks = tasks.filter(t => t.status === 'pending').length;
+  const completedTasks = tasks.filter((t) => t.status === 'completed').length;
+  const pendingTasks = tasks.filter((t) => t.status === 'pending').length;
   const totalGallery = gallery.length;
 
+  useGsapScrollReveal(pageRef, '[data-anim-role="scroll-reveal"]', [
+    settings.showStats,
+    settings.showSchedulePreview,
+    members.length,
+  ]);
+  useGsapHero(heroRef, settings.showHero);
+
+  useAnimeCounter(
+    [
+      { selector: '.counter-students', value: totalStudents },
+      { selector: '.counter-completed', value: completedTasks },
+      { selector: '.counter-gallery', value: totalGallery },
+    ],
+    [totalStudents, completedTasks, totalGallery]
+  );
+
+  // Anime.js — status dot micro pulse (single element)
   useEffect(() => {
-    // Total Students Counter
-    animate('.counter-students', {
-      innerHTML: [0, totalStudents],
-      round: 1,
-      easing: 'easeOutQuad',
-      duration: 1200
+    if (!statusDotRef.current || prefersReducedMotion()) return;
+    const anim = animate(statusDotRef.current, {
+      scale: [1, 1.12, 1],
+      opacity: [1, 0.75, 1],
+      duration: 3200,
+      loop: true,
+      easing: 'easeInOutSine',
     });
-
-    // Completed Tasks Counter
-    animate('.counter-completed', {
-      innerHTML: [0, completedTasks],
-      round: 1,
-      easing: 'easeOutQuad',
-      duration: 1200
-    });
-
-    // Gallery Archive Counter
-    animate('.counter-gallery', {
-      innerHTML: [0, totalGallery],
-      round: 1,
-      easing: 'easeOutQuad',
-      duration: 1200
-    });
-  }, [totalStudents, completedTasks, totalGallery]);
+    return () => {
+      anim.pause();
+    };
+  }, []);
 
   // System Monitor simulation
   const [cpuUsage, setCpuUsage] = React.useState(28);
@@ -109,29 +111,33 @@ export const Home: React.FC = () => {
   const todaySchedules = schedules.filter(s => s.day === (currentDayName === 'Minggu' || currentDayName === 'Sabtu' ? 'Senin' : currentDayName));
 
   return (
-    <div ref={heroRef} className="space-y-10">
+    <div ref={pageRef} className="space-y-10">
       {/* 1. Hero Section */}
       {settings.showHero && (
-        <section className="relative overflow-hidden rounded-2xl glass-panel p-8 md:p-12 border border-brand-800/80 bg-brand-900/60 shadow-2xl">
+        <section ref={heroRef} className="relative overflow-hidden rounded-2xl glass-panel p-8 md:p-12 border border-brand-800/80 bg-brand-900/60 shadow-2xl">
           <div className="absolute top-0 right-0 p-4 font-mono text-[10px] text-slate-600 hidden md:block">
             STATION_ID: SMKN1BYL-XI-TJKT-1
           </div>
           
           <div className="max-w-3xl space-y-6">
-            <div className="gsap-reveal inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-800/60 border border-brand-700/80 text-[11px] font-mono text-brand-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-terminal-green animate-ping" />
+            <div className={`${GSAP_HERO_CLASS} inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-800/60 border border-brand-700/80 text-[11px] font-mono text-brand-400`}>
+              <span
+                ref={statusDotRef}
+                data-anim-layer={ANIM_LAYER.anime}
+                className="w-1.5 h-1.5 rounded-full bg-terminal-green"
+              />
               <span>TERMINAL NODE ACTIVE (v2.6.0)</span>
             </div>
 
-            <h1 className="gsap-reveal text-4xl md:text-6xl font-display font-extrabold tracking-tight text-white leading-tight">
+            <h1 className={`${GSAP_HERO_CLASS} text-4xl md:text-6xl font-display font-extrabold tracking-tight text-white leading-tight`}>
               {settings.heroTitle}
             </h1>
             
-            <p className="gsap-reveal text-sm md:text-base text-slate-400 max-w-xl font-sans leading-relaxed">
+            <p className={`${GSAP_HERO_CLASS} text-sm md:text-base text-slate-400 max-w-xl font-sans leading-relaxed`}>
               {settings.heroSubtitle}
             </p>
 
-            <div className="gsap-reveal flex flex-wrap gap-3 pt-2">
+            <div className={`${GSAP_HERO_CLASS} flex flex-wrap gap-3 pt-2`}>
               <Button 
                 variant="primary" 
                 onClick={() => navigate('/tasks')} 
@@ -157,7 +163,7 @@ export const Home: React.FC = () => {
           </div>
 
           {/* Right Floating Console Mockup (Desktop) */}
-          <div className="absolute right-8 bottom-6 w-96 hidden lg:block opacity-75 transform hover:scale-[1.02] transition-transform duration-300">
+          <div className="hero-parallax absolute right-8 bottom-6 w-96 hidden lg:block opacity-75">
             <div className="bg-brand-950 border border-brand-800 rounded-lg overflow-hidden shadow-2xl font-mono text-[11px]">
               <div className="flex items-center justify-between px-3 py-1.5 border-b border-brand-800 bg-brand-900/60">
                 <span className="text-slate-500">guest@tjkt1-node:~</span>
@@ -180,55 +186,81 @@ export const Home: React.FC = () => {
       {/* 2. Statistical Cards (Anime.js Count-Up) */}
       {settings.showStats && (
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="flex items-center gap-4 relative overflow-hidden group">
-            <div className="p-3 rounded-lg bg-brand-800 border border-brand-700/60 text-brand-400 group-hover:border-brand-500/40 transition-colors">
-              <Users className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-xs text-slate-500 font-mono">TOTAL_MEMBERS</span>
-              <h3 className="text-2xl font-bold font-mono counter-students text-white">0</h3>
-            </div>
-          </Card>
+          <ScrollReveal>
+            <MotionCard hoverOnly className="flex items-center gap-4 relative overflow-hidden group bg-brand-800/40 border border-brand-700/50 rounded-xl shadow-lg p-5">
+              <div className="p-3 rounded-lg bg-brand-800 border border-brand-700/60 text-brand-400 group-hover:border-brand-500/40 transition-colors">
+                <Users className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-xs text-slate-500 font-mono">TOTAL_MEMBERS</span>
+                <h3 className="text-2xl font-bold font-mono counter-students text-white">0</h3>
+              </div>
+            </MotionCard>
+          </ScrollReveal>
 
-          <Card className="flex items-center gap-4 relative overflow-hidden group">
-            <div className="p-3 rounded-lg bg-brand-800 border border-brand-700/60 text-terminal-green group-hover:border-terminal-green/40 transition-colors">
-              <FileText className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-xs text-slate-500 font-mono">PENDING_TASKS</span>
-              <h3 className="text-2xl font-bold font-mono text-white">
-                {pendingTasks} <span className="text-xs font-sans text-slate-500 font-normal">due</span>
-              </h3>
-            </div>
-          </Card>
+          <ScrollReveal>
+            <MotionCard hoverOnly className="flex items-center gap-4 relative overflow-hidden group bg-brand-800/40 border border-brand-700/50 rounded-xl shadow-lg p-5">
+              <div className="p-3 rounded-lg bg-brand-800 border border-brand-700/60 text-terminal-green group-hover:border-terminal-green/40 transition-colors">
+                <FileText className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-xs text-slate-500 font-mono">PENDING_TASKS</span>
+                <h3 className="text-2xl font-bold font-mono text-white">
+                  {pendingTasks} <span className="text-xs font-sans text-slate-500 font-normal">due</span>
+                </h3>
+              </div>
+            </MotionCard>
+          </ScrollReveal>
 
-          <Card className="flex items-center gap-4 relative overflow-hidden group">
-            <div className="p-3 rounded-lg bg-brand-800 border border-brand-700/60 text-terminal-cyan group-hover:border-terminal-cyan/40 transition-colors">
-              <Image className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-xs text-slate-500 font-mono">GALLERY_ARCHIVE</span>
-              <h3 className="text-2xl font-bold font-mono counter-gallery text-white">0</h3>
-            </div>
-          </Card>
+          <ScrollReveal>
+            <MotionCard hoverOnly className="flex items-center gap-4 relative overflow-hidden group bg-brand-800/40 border border-brand-700/50 rounded-xl shadow-lg p-5">
+              <div className="p-3 rounded-lg bg-brand-800 border border-brand-700/60 text-terminal-cyan group-hover:border-terminal-cyan/40 transition-colors">
+                <Image className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-xs text-slate-500 font-mono">GALLERY_ARCHIVE</span>
+                <h3 className="text-2xl font-bold font-mono counter-gallery text-white">0</h3>
+              </div>
+            </MotionCard>
+          </ScrollReveal>
 
-          <Card className="flex items-center gap-4 relative overflow-hidden group">
-            <div className="p-3 rounded-lg bg-brand-800 border border-brand-700/60 text-terminal-yellow group-hover:border-terminal-yellow/40 transition-colors">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <div>
-              <span className="text-xs text-slate-500 font-mono">SYSTEM_STATUS</span>
-              <h3 className="text-sm font-bold font-mono text-terminal-green uppercase tracking-wide flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-terminal-green inline-block animate-pulse" />
-                <span>SECURED</span>
-              </h3>
-            </div>
-          </Card>
+          <ScrollReveal>
+            <MotionCard hoverOnly className="flex items-center gap-4 relative overflow-hidden group bg-brand-800/40 border border-brand-700/50 rounded-xl shadow-lg p-5">
+              <div className="p-3 rounded-lg bg-brand-800 border border-brand-700/60 text-terminal-yellow group-hover:border-terminal-yellow/40 transition-colors">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <span className="text-xs text-slate-500 font-mono">SYSTEM_STATUS</span>
+                <h3 className="text-sm font-bold font-mono text-terminal-green uppercase tracking-wide flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-terminal-green inline-block animate-pulse" />
+                  <span>SECURED</span>
+                </h3>
+              </div>
+            </MotionCard>
+          </ScrollReveal>
         </section>
       )}
 
+      {settings.showAttendancePreview && members.length > 0 && (
+        <ScrollReveal className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-white flex items-center gap-2">
+              <ClipboardList className="w-4 h-4 text-brand-400" />
+              Daftar Absen Kelas
+            </h3>
+            <Link
+              to="/absen"
+              className="text-[10px] font-mono text-brand-400 hover:text-brand-300 flex items-center gap-1"
+            >
+              Lihat lengkap <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
+          <AttendanceMarquee />
+        </ScrollReveal>
+      )}
+
       {/* 3. Main Workspace Grid */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <ScrollReveal className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Left Column: Announcements & Schedule Preview */}
         <div className="lg:col-span-2 space-y-6">
@@ -316,6 +348,11 @@ export const Home: React.FC = () => {
               <Link to="/members" className="p-3 rounded-lg border border-brand-700 hover:border-brand-500/40 bg-brand-950/20 hover:bg-brand-900/40 flex flex-col items-center justify-center text-center gap-1.5 transition-all text-slate-400 hover:text-white select-none">
                 <Users className="w-5 h-5 text-brand-400" />
                 <span className="text-[10px] font-mono">ROSTER_DIR</span>
+              </Link>
+
+              <Link to="/absen" className="p-3 rounded-lg border border-brand-700 hover:border-brand-500/40 bg-brand-950/20 hover:bg-brand-900/40 flex flex-col items-center justify-center text-center gap-1.5 transition-all text-slate-400 hover:text-white select-none">
+                <ClipboardList className="w-5 h-5 text-brand-300" />
+                <span className="text-[10px] font-mono">ABSEN_LIST</span>
               </Link>
               
               <Link to="/tasks" className="p-3 rounded-lg border border-brand-700 hover:border-brand-500/40 bg-brand-950/20 hover:bg-brand-900/40 flex flex-col items-center justify-center text-center gap-1.5 transition-all text-slate-400 hover:text-white select-none">
@@ -549,7 +586,7 @@ export const Home: React.FC = () => {
           {settings.showActivityLog && <ActivityLogs />}
           
         </div>
-      </section>
+      </ScrollReveal>
     </div>
   );
 };

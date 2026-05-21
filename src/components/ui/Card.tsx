@@ -1,4 +1,6 @@
 import React from 'react';
+import { MotionCard } from '../motion/MotionCard';
+import { prefersReducedMotion } from '../../utils/galleryUtils';
 
 interface CardProps {
   children: React.ReactNode;
@@ -7,6 +9,10 @@ interface CardProps {
   title?: string;
   terminalTitle?: string;
   onClick?: () => void;
+  /** Framer: hover + entrance (default) */
+  motion?: boolean;
+  /** Framer: hover only — use inside ScrollReveal (GSAP owns enter) */
+  motionHoverOnly?: boolean;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -16,6 +22,8 @@ export const Card: React.FC<CardProps> = ({
   title,
   terminalTitle = 'system_terminal.sh',
   onClick,
+  motion: useMotion = false,
+  motionHoverOnly = false,
   ...props
 }) => {
   const getBaseClass = () => {
@@ -56,18 +64,35 @@ export const Card: React.FC<CardProps> = ({
     );
   }
 
-  return (
-    <div 
-      className={`${getBaseClass()} p-5 transition-all duration-300 ${onClick ? 'cursor-pointer hover:border-brand-500/30' : ''} ${className}`}
-      onClick={onClick}
-      {...props}
-    >
+  const body = (
+    <>
       {title && (
         <div className="mb-4 border-b border-brand-700/30 pb-3 flex justify-between items-center">
           <h3 className="text-lg font-display font-medium text-white">{title}</h3>
         </div>
       )}
       {children}
+    </>
+  );
+
+  const base = `${getBaseClass()} p-5 transition-all duration-500 ease-out ${onClick ? 'cursor-pointer hover:border-brand-500/30' : ''} ${className}`;
+
+  if ((useMotion || motionHoverOnly) && !prefersReducedMotion()) {
+    return (
+      <MotionCard
+        className={base}
+        onClick={onClick}
+        hoverOnly={motionHoverOnly}
+        {...props}
+      >
+        {body}
+      </MotionCard>
+    );
+  }
+
+  return (
+    <div className={base} onClick={onClick} {...props}>
+      {body}
     </div>
   );
 };

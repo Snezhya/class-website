@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public.member (
                  CHECK (status IN ('active', 'away', 'offline')),
   photo        TEXT NOT NULL DEFAULT '/hu-tao-placeholder.png',
   sort_order   INTEGER NOT NULL DEFAULT 0,
+  absen_number INTEGER NOT NULL DEFAULT 0,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -99,6 +100,7 @@ CREATE TABLE IF NOT EXISTS public.app_settings (
   show_stats            BOOLEAN NOT NULL DEFAULT true,
   show_schedule_preview BOOLEAN NOT NULL DEFAULT true,
   show_activity_log     BOOLEAN NOT NULL DEFAULT true,
+  show_attendance_preview BOOLEAN NOT NULL DEFAULT true,
   hero_title            TEXT NOT NULL DEFAULT 'XI TJKT 1 PORTAL',
   hero_subtitle         TEXT NOT NULL DEFAULT 'Networking & Telecommunications Systems Developer Terminal. SMKN 1 Boyolali Class Hub.',
   logo_header           TEXT NOT NULL DEFAULT '',

@@ -5,8 +5,13 @@ import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/shared/EmptyState';
-import { Search, User, Terminal, Award } from 'lucide-react';
-import gsap from 'gsap';
+import { Search, User, Terminal, Award, ListOrdered } from 'lucide-react';
+import { type Member } from '../data/initialData';
+import { sortByAbsen } from '../utils/attendance';
+import { TerminalOutput } from '../components/motion/TerminalOutput';
+import { MotionCard } from '../components/motion/MotionCard';
+import { ScrollReveal } from '../components/motion/ScrollReveal';
+import { useGsapScrollReveal } from '../hooks/useGsapScrollReveal';
 
 const Github = (props: any) => (
   <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -36,9 +41,10 @@ export const Members: React.FC = () => {
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRole, setSelectedRole] = useState<'all' | 'core' | 'member'>('all');
+  const [viewByAbsen, setViewByAbsen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
-  const [terminalInspectText, setTerminalInspectText] = useState<string[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [inspectLines, setInspectLines] = useState<string[]>([]);
 
   // URL search parameter check
   useEffect(() => {
@@ -49,18 +55,11 @@ export const Members: React.FC = () => {
     }
   }, [location]);
 
-  // GSAP animation triggers on cards when list updates
-  useEffect(() => {
-    if (containerRef.current) {
-      const cards = containerRef.current.querySelectorAll('.member-card-anim');
-      gsap.killTweensOf(cards);
-      gsap.fromTo(
-        cards,
-        { opacity: 0, scale: 0.9, y: 20 },
-        { opacity: 1, scale: 1, y: 0, duration: 0.5, stagger: 0.08, ease: 'back.out(1.2)' }
-      );
-    }
-  }, [searchQuery, selectedRole]);
+  useGsapScrollReveal(containerRef, '[data-anim-role="scroll-reveal"]', [
+    searchQuery,
+    selectedRole,
+    viewByAbsen,
+  ]);
 
   // Filters logic
   const filteredMembers = members.filter(m => {
@@ -76,8 +75,11 @@ export const Members: React.FC = () => {
     return matchesSearch && matchesRole;
   });
 
-  const coreTeam = filteredMembers.filter(m => m.isCore);
-  const regularRoster = filteredMembers.filter(m => !m.isCore);
+  const sortByOrder = (arr: Member[]) => [...arr].sort((a, b) => a.order - b.order);
+
+  const absenList = viewByAbsen ? sortByAbsen(filteredMembers) : [];
+  const coreTeam = viewByAbsen ? [] : sortByOrder(filteredMembers.filter(m => m.isCore));
+  const regularRoster = viewByAbsen ? [] : sortByOrder(filteredMembers.filter(m => !m.isCore));
 
   const getStatusColor = (status: 'active' | 'away' | 'offline') => {
     switch (status) {
@@ -92,14 +94,13 @@ export const Members: React.FC = () => {
   };
 
   // Inspect terminal emulator simulation
-  const handleInspectMember = (member: any) => {
-    setSelectedMember(member);
-    setTerminalInspectText([
+  const buildInspectLines = (member: Member) => [
       `$ bash ./profile_inspect.sh --target="${member.name.replace(/\s+/g, '_')}"`,
       `[INFO] Locating registry NIS: ${member.nis}... Found.`,
       `[INFO] Querying system directory for: '${member.role}'...`,
       `--------------------------------------------------`,
       `NAME        : ${member.name}`,
+      ...(viewByAbsen ? [`ABSEN       : ${member.absen ?? '—'}`] : []),
       `NIS         : ${member.nis}`,
       `HIERARCHY   : ${member.isCore ? 'CORE_CLASS_COUNCIL' : 'GENERAL_ROSTER'}`,
       `DESIGNATION : ${member.role}`,
@@ -107,14 +108,18 @@ export const Members: React.FC = () => {
       `BIO         : "${member.bio}"`,
       `SKILLS      : [${member.skills.join(', ')}]`,
       `--------------------------------------------------`,
-      `[SUCCESS] Shell profile printed successfully. System daemon waiting...`
-    ]);
+      `[SUCCESS] Shell profile printed successfully. System daemon waiting...`,
+  ];
+
+  const handleInspectMember = (member: Member) => {
+    setSelectedMember(member);
+    setInspectLines(buildInspectLines(member));
   };
 
   return (
     <div className="space-y-8">
       {/* Search and Filters Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-brand-900/40 p-4 border border-brand-800 rounded-xl">
+      <ScrollReveal className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-brand-900/40 p-4 border border-brand-800 rounded-xl">
         <div className="relative w-full md:max-w-xs">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
           <input
@@ -150,8 +155,16 @@ export const Members: React.FC = () => {
           >
             Full Roster
           </Button>
+          <Button
+            variant={viewByAbsen ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={() => setViewByAbsen(prev => !prev)}
+            icon={ListOrdered}
+          >
+            Urut Absen
+          </Button>
         </div>
-      </div>
+      </ScrollReveal>
 
       {/* Roster Layout Directory */}
       <div ref={containerRef} className="space-y-12">
@@ -170,6 +183,40 @@ export const Members: React.FC = () => {
             actionText="Clear search query"
             onAction={() => { setSearchQuery(''); setSelectedRole('all'); }}
           />
+        ) : viewByAbsen ? (
+          <Card title="Daftar urut nomor absen" className="max-w-2xl mx-auto">
+            <div className="space-y-2">
+              {absenList.map((member) => (
+                <ScrollReveal key={member.id}>
+                  <MotionCard
+                    hoverOnly
+                    onClick={() => handleInspectMember(member)}
+                    className="flex items-center gap-4 p-3 rounded-xl border border-brand-800 bg-brand-900/30 hover:border-brand-600/50 cursor-pointer"
+                  >
+                  <span className="w-11 h-11 shrink-0 rounded-xl bg-brand-500 border-2 border-brand-950 text-lg font-mono font-bold text-white flex items-center justify-center">
+                    {member.absen}
+                  </span>
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className="w-12 h-12 rounded-lg object-cover border border-brand-700 shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-sm font-bold text-white truncate">{member.name}</h3>
+                    <span className="text-[10px] text-slate-500 font-mono block">{member.nis}</span>
+                    <span className="text-[10px] font-mono text-brand-400">{member.role}</span>
+                  </div>
+                  {member.isCore && (
+                    <span className="text-[9px] font-mono text-terminal-yellow bg-terminal-yellow/10 border border-terminal-yellow/20 px-2 py-0.5 rounded shrink-0">
+                      COUNCIL
+                    </span>
+                  )}
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${getStatusColor(member.status)}`} />
+                  </MotionCard>
+                </ScrollReveal>
+              ))}
+            </div>
+          </Card>
         ) : (
           <>
             {/* 1. Core Class Council (featured) */}
@@ -184,8 +231,9 @@ export const Members: React.FC = () => {
                   {coreTeam.map(member => (
                     <Card
                       key={member.id}
+                      motion
                       onClick={() => handleInspectMember(member)}
-                      className="member-card-anim border-brand-700/60 bg-gradient-to-br from-brand-800/40 via-brand-800/20 to-brand-900/60 hover:border-brand-500/50 hover:shadow-brand-500/5 relative group cursor-pointer"
+                      className="border-brand-700/60 bg-gradient-to-br from-brand-800/40 via-brand-800/20 to-brand-900/60 hover:border-brand-500/50 hover:shadow-brand-500/5 relative group"
                     >
                       {/* Featured Border Accent */}
                       <div className="absolute top-0 left-0 w-full h-[3px] bg-brand-500" />
@@ -244,15 +292,16 @@ export const Members: React.FC = () => {
                   {regularRoster.map(member => (
                     <Card
                       key={member.id}
+                      motion
                       onClick={() => handleInspectMember(member)}
-                      className="member-card-anim bg-brand-900/30 border-brand-800/80 hover:border-brand-700/60 flex flex-col justify-between hover:scale-[1.01] cursor-pointer"
+                      className="bg-brand-900/30 border-brand-800/80 flex flex-col justify-between"
                     >
                       <div className="space-y-3">
                         <div className="flex items-center gap-3">
                           <img
                             src={member.image}
                             alt={member.name}
-                            className="w-11 h-11 rounded-lg object-cover border border-brand-800 select-none bg-brand-950"
+                            className="w-11 h-11 rounded-lg object-cover border border-brand-800 select-none bg-brand-950 shrink-0"
                           />
                           <div className="min-w-0">
                             <h3 className="text-xs font-bold text-white truncate">{member.name}</h3>
@@ -302,10 +351,8 @@ export const Members: React.FC = () => {
                 <span className="w-1.5 h-1.5 rounded-full bg-terminal-green animate-pulse" />
               </div>
               
-              <div className="p-4 space-y-1.5 text-terminal-green/90 overflow-x-auto">
-                {terminalInspectText.map((line, idx) => (
-                  <div key={idx} className="whitespace-pre">{line}</div>
-                ))}
+              <div className="p-4 text-terminal-green/90 overflow-x-auto">
+                <TerminalOutput lines={inspectLines} active={!!selectedMember} />
               </div>
             </div>
 

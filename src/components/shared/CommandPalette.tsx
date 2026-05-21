@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Terminal, Users, Calendar, Image, FileText, Settings, ShieldAlert, Sparkles, AlertTriangle } from 'lucide-react';
+import { Search, Terminal, Users, Calendar, Image, FileText, Settings, ShieldAlert, Sparkles, AlertTriangle, ClipboardList } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { useToast } from '../../context/ToastContext';
 import { AnimatePresence, motion } from 'framer-motion';
+import { overlayPop } from '../../utils/motionVariants';
+import { tweenSmooth } from '../../utils/animationConfig';
 
 export const CommandPalette: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -58,6 +60,7 @@ export const CommandPalette: React.FC = () => {
   const pages = [
     { title: 'Dashboard / Home', path: '/', icon: Terminal },
     { title: 'Class Members', path: '/members', icon: Users },
+    { title: 'Daftar Absen', path: '/absen', icon: ClipboardList },
     { title: 'Tasks & Homework', path: '/tasks', icon: FileText },
     { title: 'Schedule & Exams', path: '/schedule', icon: Calendar },
     { title: 'Gallery Archive', path: '/gallery', icon: Image },
@@ -171,12 +174,19 @@ export const CommandPalette: React.FC = () => {
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] px-4 bg-brand-950/80 backdrop-blur-sm">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={tweenSmooth(0.35)}
+          className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] px-4 bg-brand-950/80 backdrop-blur-sm"
+        >
           <motion.div
             ref={containerRef}
-            initial={{ opacity: 0, scale: 0.95, y: -20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: -20 }}
+            variants={overlayPop}
+            initial="initial"
+            animate="animate"
+            exit="exit"
             className="w-full max-w-2xl bg-brand-900 border border-brand-700/80 rounded-xl overflow-hidden shadow-2xl flex flex-col max-h-[60vh] select-none"
             onKeyDown={handleKeyDown}
           >
@@ -241,7 +251,7 @@ export const CommandPalette: React.FC = () => {
               </div>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
     </AnimatePresence>
   );

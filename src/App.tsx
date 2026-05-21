@@ -12,6 +12,7 @@ import { Schedule } from './pages/Schedule';
 import { Gallery } from './pages/Gallery';
 import { Notes } from './pages/Notes';
 import { Admin } from './pages/Admin';
+import { Absen } from './pages/Absen';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/members" element={<Members />} />
+              <Route path="/absen" element={<Absen />} />
               <Route path="/tasks" element={<Tasks />} />
               <Route path="/schedule" element={<Schedule />} />
               <Route path="/gallery" element={<Gallery />} />

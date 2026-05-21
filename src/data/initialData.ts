@@ -16,6 +16,8 @@ export interface Member {
   status: 'active' | 'away' | 'offline';
   image: string;
   order: number;
+  /** Nomor absen kelas (satu sumber untuk council, roster, daftar absen) */
+  absen: number;
 }
 
 export interface Task {
@@ -82,6 +84,7 @@ export interface SystemSettings {
   showStats: boolean;
   showSchedulePreview: boolean;
   showActivityLog: boolean;
+  showAttendancePreview: boolean;
   heroTitle: string;
   heroSubtitle: string;
   logoHeader: string;
@@ -104,7 +107,8 @@ export const initialMembers: Member[] = [
     socialLinks: { github: 'https://github.com', instagram: 'https://instagram.com' },
     status: 'active',
     image: '/hu-tao-placeholder.png',
-    order: 1
+    order: 1,
+    absen: 1,
   },
   {
     id: '2',
@@ -117,7 +121,8 @@ export const initialMembers: Member[] = [
     socialLinks: { instagram: 'https://instagram.com', linkedin: 'https://linkedin.com' },
     status: 'active',
     image: '/hu-tao-placeholder.png',
-    order: 2
+    order: 2,
+    absen: 2,
   },
   {
     id: '3',
@@ -130,7 +135,8 @@ export const initialMembers: Member[] = [
     socialLinks: { github: 'https://github.com', linkedin: 'https://linkedin.com' },
     status: 'active',
     image: '/hu-tao-placeholder.png',
-    order: 3
+    order: 3,
+    absen: 3,
   },
   {
     id: '4',
@@ -143,7 +149,8 @@ export const initialMembers: Member[] = [
     socialLinks: { instagram: 'https://instagram.com' },
     status: 'away',
     image: '/hu-tao-placeholder.png',
-    order: 4
+    order: 4,
+    absen: 4,
   },
   {
     id: '5',
@@ -156,7 +163,8 @@ export const initialMembers: Member[] = [
     socialLinks: { instagram: 'https://instagram.com' },
     status: 'offline',
     image: '/hu-tao-placeholder.png',
-    order: 5
+    order: 5,
+    absen: 5,
   },
   {
     id: '6',
@@ -169,7 +177,8 @@ export const initialMembers: Member[] = [
     socialLinks: { github: 'https://github.com' },
     status: 'active',
     image: '/hu-tao-placeholder.png',
-    order: 6
+    order: 6,
+    absen: 6,
   },
   {
     id: '7',
@@ -182,7 +191,8 @@ export const initialMembers: Member[] = [
     socialLinks: { linkedin: 'https://linkedin.com' },
     status: 'active',
     image: '/hu-tao-placeholder.png',
-    order: 7
+    order: 7,
+    absen: 7,
   },
   {
     id: '8',
@@ -195,7 +205,8 @@ export const initialMembers: Member[] = [
     socialLinks: { github: 'https://github.com' },
     status: 'away',
     image: '/hu-tao-placeholder.png',
-    order: 8
+    order: 8,
+    absen: 8,
   },
   {
     id: '9',
@@ -208,7 +219,8 @@ export const initialMembers: Member[] = [
     socialLinks: { instagram: 'https://instagram.com' },
     status: 'active',
     image: '/hu-tao-placeholder.png',
-    order: 9
+    order: 9,
+    absen: 9,
   },
   {
     id: '10',
@@ -221,8 +233,9 @@ export const initialMembers: Member[] = [
     socialLinks: { github: 'https://github.com' },
     status: 'offline',
     image: '/hu-tao-placeholder.png',
-    order: 10
-  }
+    order: 10,
+    absen: 10,
+  },
 ];
 
 export const initialTasks: Task[] = [
@@ -399,6 +412,7 @@ export const defaultSettings: SystemSettings = {
   showStats: true,
   showSchedulePreview: true,
   showActivityLog: true,
+  showAttendancePreview: true,
   heroTitle: 'XI TJKT 1 PORTAL',
   heroSubtitle: 'Networking & Telecommunications Systems Developer Terminal. SMKN 1 Boyolali Class Hub.',
   logoHeader: DEFAULT_BRAND.logoHeader,

@@ -2,13 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Terminal, Users, Calendar, Image, FileText, ShieldAlert, 
-  Menu, X, Settings, LogOut, Clock 
+  Menu, X, Settings, LogOut, Clock, ClipboardList
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { BrandLogo } from '../components/shared/BrandLogo';
 import { Background } from '../components/shared/Background';
 import { CommandPalette } from '../components/shared/CommandPalette';
 import { Button } from '../components/ui/Button';
+import { PageTransition } from '../components/motion/PageTransition';
+import { AnimatePresence, motion } from 'framer-motion';
+import { drawerBackdrop, drawerPanel } from '../utils/motionVariants';
+import { gentleSpring } from '../utils/animationConfig';
+import { prefersReducedMotion } from '../utils/galleryUtils';
 
 export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAdmin, logout, settings } = useApp();
@@ -28,6 +33,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
   const navLinks = [
     { name: 'Dashboard', path: '/', icon: Terminal },
     { name: 'Members', path: '/members', icon: Users },
+    { name: 'Absen', path: '/absen', icon: ClipboardList },
     { name: 'Tasks', path: '/tasks', icon: FileText },
     { name: 'Schedule', path: '/schedule', icon: Calendar },
     { name: 'Gallery', path: '/gallery', icon: Image },
@@ -72,19 +78,31 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
               const Icon = link.icon;
               const isActive = location.pathname === link.path || 
                                (link.path !== '/' && location.pathname.startsWith(link.path));
+              const linkClass = `relative z-10 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium select-none ${
+                isActive ? 'text-white' : 'text-slate-400 hover:text-white'
+              }`;
+              if (prefersReducedMotion()) {
+                return (
+                  <Link key={link.path} to={link.path} className={linkClass}>
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{link.name}</span>
+                  </Link>
+                );
+              }
               return (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all select-none border border-transparent ${
-                    isActive 
-                      ? 'bg-brand-800/60 text-white border-brand-700/40 shadow-inner' 
-                      : 'text-slate-400 hover:text-white hover:bg-brand-900/40'
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{link.name}</span>
-                </Link>
+                <motion.div key={link.path} layout className="relative">
+                  <Link to={link.path} className={linkClass}>
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{link.name}</span>
+                  </Link>
+                  {isActive && (
+                    <motion.span
+                      layoutId="nav-active-pill"
+                      className="absolute inset-0 rounded-lg bg-brand-800/40 border border-brand-700/30 -z-10"
+                      transition={gentleSpring}
+                    />
+                  )}
+                </motion.div>
               );
             })}
           </nav>
@@ -140,53 +158,80 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
         </div>
       </header>
 
-      {/* Mobile Collapsible Navigation Drawer */}
-      {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-30 pt-16 bg-brand-950/95 backdrop-blur-md flex flex-col justify-between">
-          <nav className="p-6 flex flex-col gap-2">
-            {navLinks.map(link => {
-              const Icon = link.icon;
-              const isActive = location.pathname === link.path;
-              return (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    isActive 
-                      ? 'bg-brand-500 text-white' 
-                      : 'text-slate-400 hover:text-white hover:bg-brand-900/40'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{link.name}</span>
-                </Link>
-              );
-            })}
-          </nav>
-          
-          <div className="p-6 border-t border-brand-800/80 bg-brand-950/40 flex flex-col gap-3">
-            <div className="flex justify-between items-center text-xs font-mono text-slate-500">
-              <span>STATUS:</span>
-              <span className="text-terminal-green">SYS_OPERATIONAL</span>
-            </div>
-            {isAdmin && (
-              <Button 
-                variant="danger" 
-                className="w-full" 
-                onClick={() => { handleAdminLogout(); setMobileMenuOpen(false); }}
-                icon={LogOut}
-              >
-                Log Out Admin
-              </Button>
-            )}
+      {/* Mobile sidebar slide — Framer Motion */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <div className="md:hidden fixed inset-0 z-30">
+            <motion.div
+              variants={drawerBackdrop}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="absolute inset-0 bg-brand-950/80 backdrop-blur-sm"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            <motion.aside
+              variants={drawerPanel}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              className="absolute right-0 top-0 bottom-0 w-[min(100%,280px)] pt-16 bg-brand-950 border-l border-brand-800 flex flex-col justify-between shadow-2xl"
+            >
+              <nav className="p-6 flex flex-col gap-2">
+                {navLinks.map((link, i) => {
+                  const Icon = link.icon;
+                  const isActive = location.pathname === link.path;
+                  return (
+                    <motion.div
+                      key={link.path}
+                      initial={prefersReducedMotion() ? false : { opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ ...gentleSpring, delay: i * 0.05 }}
+                    >
+                      <Link
+                        to={link.path}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                          isActive
+                            ? 'bg-brand-500 text-white'
+                            : 'text-slate-400 hover:text-white hover:bg-brand-900/40'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        <span>{link.name}</span>
+                      </Link>
+                    </motion.div>
+                  );
+                })}
+              </nav>
+
+              <div className="p-6 border-t border-brand-800/80 bg-brand-950/40 flex flex-col gap-3">
+                <div className="flex justify-between items-center text-xs font-mono text-slate-500">
+                  <span>STATUS:</span>
+                  <span className="text-terminal-green">SYS_OPERATIONAL</span>
+                </div>
+                {isAdmin && (
+                  <Button
+                    variant="danger"
+                    className="w-full"
+                    onClick={() => {
+                      handleAdminLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                    icon={LogOut}
+                  >
+                    Log Out Admin
+                  </Button>
+                )}
+              </div>
+            </motion.aside>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
       {/* Main Page Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-8">
-        {children}
+        <PageTransition>{children}</PageTransition>
       </main>
 
       {/* Mobile Native-like Bottom Navigation Bar */}

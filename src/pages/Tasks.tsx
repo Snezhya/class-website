@@ -149,7 +149,7 @@ export const Tasks: React.FC = () => {
                 className="bg-brand-500 h-2.5 rounded-full"
                 initial={{ width: 0 }}
                 animate={{ width: `${completionPercent}%` }}
-                transition={{ duration: 0.8, ease: 'easeOut' }}
+                transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
               />
             </div>
           </div>
@@ -216,7 +216,7 @@ export const Tasks: React.FC = () => {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <Card 
                     className={`flex flex-col justify-between h-full border-l-4 transition-all duration-300 ${

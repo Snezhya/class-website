@@ -4,6 +4,7 @@ import {
   initialMembers, initialTasks, initialSchedule, initialNotes, initialGallery, defaultSettings 
 } from '../data/initialData';
 import { storage } from '../utils/storage';
+import { getNextAbsenNumber, renumberAbsenList } from '../utils/attendance';
 import { supabase } from '../lib/supabase';
 import {
   fetchMembers, addMemberDb, editMemberDb, deleteMemberDb, mapDbToMember,
@@ -34,10 +35,11 @@ interface AppContextType {
   logout: () => void;
 
   // Member CRUD
-  addMember: (member: Omit<Member, 'id' | 'order'>) => Promise<void>;
+  addMember: (member: Omit<Member, 'id' | 'order' | 'absen'> & { absen?: number }) => Promise<void>;
   editMember: (id: string, member: Partial<Member>) => Promise<void>;
   deleteMember: (id: string) => Promise<void>;
   reorderMembers: (members: Member[]) => Promise<void>;
+  reorderAbsen: (members: Member[]) => Promise<void>;
 
   // Task CRUD
   addTask: (task: Omit<Task, 'id'>) => Promise<void>;
@@ -354,9 +356,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Member Operations
-  const addMember = async (newMember: Omit<Member, 'id' | 'order'>) => {
+  const addMember = async (newMember: Omit<Member, 'id' | 'order' | 'absen'> & { absen?: number }) => {
+    const { absen: requestedAbsen, ...rest } = newMember;
     const order = members.length + 1;
-    const memberWithOrder = { ...newMember, order };
+    const absen = requestedAbsen ?? getNextAbsenNumber(members);
+    const memberWithOrder = { ...rest, order, absen };
 
     const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
     const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -457,13 +461,30 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (supabaseUrl && supabaseAnonKey) {
       try {
-        // Sequentially execute updates in background
         for (const m of adjustedList) {
           await editMemberDb(m.id, { order: m.order });
         }
         addActivityLog('MEMBER DAEMON: Pushed roster reordering to remote database.');
       } catch (err: any) {
         addActivityLog(`MEMBER DAEMON: Remote reorder sync warning - ${err.message}`);
+      }
+    }
+  };
+
+  const reorderAbsen = async (reorderedByAbsen: Member[]) => {
+    const adjustedList = renumberAbsenList(reorderedByAbsen);
+    setMembers(adjustedList);
+    storage.set('members', adjustedList);
+    addActivityLog('ABSEN DAEMON: Urutan nomor absen diperbarui.');
+
+    if (hasSupabase) {
+      try {
+        for (const m of adjustedList) {
+          await editMemberDb(m.id, { absen: m.absen });
+        }
+        addActivityLog('ABSEN DAEMON: Sinkron nomor absen ke Supabase.');
+      } catch (err: any) {
+        addActivityLog(`ABSEN DAEMON: Sync warning - ${err.message}`);
       }
     }
   };
@@ -767,7 +788,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       members, tasks, schedules, notes, gallery, settings, isAdmin, activityLogs,
       dbLoading, dbError,
       login, logout,
-      addMember, editMember, deleteMember, reorderMembers,
+      addMember, editMember, deleteMember, reorderMembers, reorderAbsen,
       addTask, editTask, deleteTask, toggleTaskCompleted,
       addSchedule, editSchedule, deleteSchedule,
       addNote, editNote, deleteNote,

@@ -14,7 +14,9 @@ import { Image, Search, Plus, Calendar, Trash2, Eye, Layers, Pencil } from 'luci
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 
-const springTransition = { type: 'spring' as const, stiffness: 380, damping: 32 };
+import { gentleSpring, GSAP_SMOOTH_EASE } from '../utils/animationConfig';
+
+const springTransition = gentleSpring;
 
 export const Gallery: React.FC = () => {
   const { gallery, addGalleryAlbum, deleteGallery, isAdmin } = useApp();
@@ -55,14 +57,14 @@ export const Gallery: React.FC = () => {
     }
     gsap.fromTo(
       cards,
-      { opacity: 0, y: 24, scale: 0.92 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.45, stagger: 0.06, ease: 'power3.out' }
+      { opacity: 0, y: 16, scale: 0.98 },
+      { opacity: 1, y: 0, scale: 1, duration: 0.85, stagger: 0.08, ease: GSAP_SMOOTH_EASE }
     );
   }, [filteredAlbums.length, activeCategory, searchQuery, reduced]);
 
   useEffect(() => {
     if (!headerRef.current || reduced) return;
-    gsap.fromTo(headerRef.current, { opacity: 0, y: -12 }, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' });
+    gsap.fromTo(headerRef.current, { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.9, ease: GSAP_SMOOTH_EASE });
   }, [reduced]);
 
   useEffect(() => {
@@ -219,14 +221,15 @@ export const Gallery: React.FC = () => {
                   animate={{ opacity: 1 }}
                   exit={reduced ? undefined : { opacity: 0, scale: 0.95 }}
                   onClick={() => setInspectAlbum(album)}
-                  className="gallery-card-anim cursor-pointer group relative rounded-xl overflow-hidden border border-brand-800 hover:border-brand-500/50 bg-brand-900/20 shadow-lg hover:shadow-2xl transition-[border-color,box-shadow] duration-300"
+                  data-anim-layer="gsap"
+                  className="gallery-card-anim cursor-pointer group relative rounded-xl overflow-hidden border border-brand-800 hover:border-brand-500/50 bg-brand-900/20 shadow-lg hover:shadow-2xl transition-[border-color,box-shadow] duration-500 ease-out"
                 >
                   <div className="relative aspect-video overflow-hidden bg-brand-950">
                     <img
                       src={album.coverImage}
                       alt={album.title}
                       loading="lazy"
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 ease-out"
                     />
                     <span className="absolute top-3 left-3 bg-brand-950/80 border border-brand-800 backdrop-blur-sm text-[9px] font-mono text-brand-400 px-2 py-0.5 rounded">
                       {album.category.toUpperCase()}

@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { useToast } from '../context/ToastContext';
 import { uploadMemberPhoto, uploadSiteAsset } from '../utils/supabaseApi';
 import { AdminBrandPanel } from '../components/admin/AdminBrandPanel';
+import { AdminAbsenPanel } from '../components/admin/AdminAbsenPanel';
+import { TerminalOutput } from '../components/motion/TerminalOutput';
+import { useAnimeShake } from '../hooks/useAnimeMicro';
 import { BrandLogo } from '../components/shared/BrandLogo';
 import { 
   ShieldAlert, Lock, Eye, EyeOff, Trash2, RefreshCw
@@ -22,9 +25,12 @@ export const Admin: React.FC = () => {
   const [passwordInput, setPasswordInput] = useState('');
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [loginLogs, setLoginLogs] = useState<string[]>(['[SYSTEM] Authentication node waiting at auth_session_init.sh']);
+  const [loginShake, setLoginShake] = useState(0);
+  const loginTerminalRef = useRef<HTMLDivElement>(null);
+  useAnimeShake(loginTerminalRef, loginShake);
 
   // Admin Workspace State
-  const [activeAdminTab, setActiveAdminTab] = useState<'overview' | 'brand' | 'customization' | 'members'>('overview');
+  const [activeAdminTab, setActiveAdminTab] = useState<'overview' | 'brand' | 'customization' | 'members' | 'absen'>('overview');
   
   // Member Form State for Admin Quick Add
   const [memName, setMemName] = useState('');
@@ -53,6 +59,7 @@ export const Admin: React.FC = () => {
         toast('Welcome back, System Admin', 'success');
       } else {
         setLoginLogs(prev => [...prev, `[ERROR] Invalid credentials or password. Denied.`, `[WARN] Log recorded at secure_audit.log`]);
+        setLoginShake((n) => n + 1);
         toast('Authentication failed', 'error');
         setIsAuthenticating(false);
       }
@@ -163,10 +170,11 @@ export const Admin: React.FC = () => {
         <Card variant="terminal" terminalTitle="auth_session_init.sh">
           <div className="space-y-4">
             {/* Terminal logs */}
-            <div className="text-[11px] text-terminal-green/80 space-y-1 h-32 overflow-y-auto bg-terminal-dark/60 p-3 rounded-lg border border-brand-850">
-              {loginLogs.map((log, idx) => (
-                <div key={idx}>{log}</div>
-              ))}
+            <div
+              ref={loginTerminalRef}
+              className="text-[11px] text-terminal-green/80 h-32 overflow-y-auto bg-terminal-dark/60 p-3 rounded-lg border border-brand-850"
+            >
+              <TerminalOutput lines={loginLogs} active charDelayMs={8} />
             </div>
 
             <form onSubmit={handleLoginSubmit} className="space-y-4">
@@ -272,6 +280,16 @@ export const Admin: React.FC = () => {
         >
           MANAGE ROSTER LIST
         </button>
+        <button
+          onClick={() => setActiveAdminTab('absen')}
+          className={`px-4 py-2 text-xs font-mono font-medium rounded-lg transition-all flex-1 text-center whitespace-nowrap ${
+            activeAdminTab === 'absen'
+              ? 'bg-brand-800 border border-brand-700 text-white'
+              : 'text-slate-400 hover:text-white hover:bg-brand-900/40'
+          }`}
+        >
+          DAFTAR ABSEN
+        </button>
       </div>
 
       {/* Admin Tabs Content */}
@@ -353,6 +371,23 @@ export const Admin: React.FC = () => {
                   </button>
                 </div>
 
+                <div className="flex items-center justify-between p-3 rounded-lg bg-brand-950/20 border border-brand-800">
+                  <span className="flex flex-col">
+                    <span className="text-white font-semibold">Animasi Daftar Absen</span>
+                    <span className="text-[10px] text-slate-500">Marquee foto + nomor absen di dashboard</span>
+                  </span>
+                  <button
+                    onClick={() => updateSettings({ showAttendancePreview: !settings.showAttendancePreview })}
+                    className={`p-1.5 rounded-lg border transition-colors ${
+                      settings.showAttendancePreview
+                        ? 'border-terminal-green/30 bg-terminal-green/10 text-terminal-green'
+                        : 'border-brand-800 bg-brand-950 text-slate-500'
+                    }`}
+                  >
+                    {settings.showAttendancePreview ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                  </button>
+                </div>
+
               </div>
             </Card>
 
@@ -388,6 +423,8 @@ export const Admin: React.FC = () => {
         )}
 
         {activeAdminTab === 'brand' && <AdminBrandPanel />}
+
+        {activeAdminTab === 'absen' && <AdminAbsenPanel />}
 
         {/* Tab: Customization & Background controls */}
         {activeAdminTab === 'customization' && (
@@ -660,6 +697,7 @@ export const Admin: React.FC = () => {
                   <thead>
                     <tr className="bg-brand-950/70 border-b border-brand-800 text-slate-400 uppercase select-none">
                       <th className="p-4">Index</th>
+                      <th className="p-4">Absen</th>
                       <th className="p-4">Name</th>
                       <th className="p-4">NIS</th>
                       <th className="p-4">Role Designation</th>
@@ -672,6 +710,7 @@ export const Admin: React.FC = () => {
                     {members.sort((a, b) => a.order - b.order).map((mem, idx) => (
                       <tr key={mem.id} className="hover:bg-brand-900/20 transition-colors">
                         <td className="p-4 font-bold text-slate-500">{mem.order}</td>
+                        <td className="p-4 font-mono font-bold text-brand-400">{mem.absen}</td>
                         <td className="p-4 text-white font-sans font-medium">{mem.name}</td>
                         <td className="p-4 text-slate-450">{mem.nis}</td>
                         <td className="p-4 text-brand-400">{mem.role}</td>

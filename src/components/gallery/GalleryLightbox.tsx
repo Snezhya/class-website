@@ -54,17 +54,19 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
     gsap.fromTo(
       mainImgRef.current,
       { opacity: 0, scale: 1.03, filter: 'blur(6px)' },
-      { opacity: 1, scale: 1, filter: 'blur(0px)', duration: 0.5, ease: 'power2.out' }
+      { opacity: 1, scale: 1, filter: 'blur(0px)', duration: 0.75, ease: 'expo.out' }
     );
   }, [index, isOpen, current?.id, reduced]);
 
   useEffect(() => {
     if (!isOpen || !thumbStripRef.current || reduced) return;
-    const active = thumbStripRef.current.querySelector('[data-active="true"]');
-    if (active) {
-      animate(active, { scale: [1, 1.06, 1], duration: 420, easing: 'easeOutQuad' });
-      active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    const active = thumbStripRef.current.querySelector<HTMLElement>('[data-active="true"]');
+    if (!active) return;
+    const thumbImg = active.querySelector('img');
+    if (thumbImg) {
+      animate(thumbImg, { scale: [1, 1.04, 1], duration: 650, easing: 'easeInOutSine' });
     }
+    active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   }, [index, isOpen, reduced]);
 
   useEffect(() => {
@@ -90,17 +92,15 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
         <motion.div
           role="dialog"
           aria-modal="true"
+          data-anim-layer="framer"
+          data-anim-role="lightbox-shell"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: reduced ? 0.01 : 0.25 }}
+          transition={{ duration: reduced ? 0.01 : 0.5, ease: [0.16, 1, 0.3, 1] }}
           className="fixed inset-0 z-[60] flex flex-col bg-brand-950/95 backdrop-blur-md"
         >
-          <motion.div
-            initial={{ y: -12, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="flex items-center justify-between gap-3 px-3 sm:px-5 py-3 border-b border-brand-800/80 shrink-0"
-          >
+          <div className="flex items-center justify-between gap-3 px-3 sm:px-5 py-3 border-b border-brand-800/80 shrink-0">
             <div className="min-w-0 flex-1">
               <p className="text-[10px] font-mono text-brand-400 flex items-center gap-1.5 truncate">
                 <Images className="w-3.5 h-3.5 shrink-0" />
@@ -128,7 +128,7 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
                 <X className="w-5 h-5" />
               </button>
             </div>
-          </motion.div>
+          </div>
 
           <div
             className="relative flex-1 min-h-0 flex items-center justify-center px-2 sm:px-8 py-2"
@@ -169,6 +169,8 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
               )}
               <img
                 ref={mainImgRef}
+                data-anim-layer="gsap"
+                data-anim-role="lightbox-image"
                 key={current.id}
                 src={current.image}
                 alt={album.title}
@@ -184,24 +186,15 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
             )}
           </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="px-4 sm:px-6 py-2 shrink-0 max-w-3xl mx-auto w-full"
-          >
+          <div className="px-4 sm:px-6 py-2 shrink-0 max-w-3xl mx-auto w-full">
             <span className="text-[10px] font-mono text-slate-500 flex items-center gap-1">
               <Calendar className="w-3 h-3" />
               {album.date}
             </span>
             <p className="text-xs text-slate-400 line-clamp-2 mt-0.5">{album.description}</p>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.4 }}
-            className="shrink-0 border-t border-brand-800/80 bg-brand-900/40 px-3 sm:px-4 py-3"
-          >
+          <div className="shrink-0 border-t border-brand-800/80 bg-brand-900/40 px-3 sm:px-4 py-3">
             <p className="text-[9px] font-mono text-slate-500 mb-2 uppercase tracking-wider">
               Galeri moment · semua frame
             </p>
@@ -210,14 +203,12 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
               className="flex gap-2 sm:gap-3 overflow-x-auto pb-1 snap-x snap-mandatory"
             >
               {slides.map((slide, i) => (
-                <motion.button
+                <button
                   key={slide.id}
                   type="button"
                   data-active={i === index ? 'true' : 'false'}
                   onClick={() => setIndex(i)}
-                  whileHover={reduced ? {} : { scale: 1.05 }}
-                  whileTap={reduced ? {} : { scale: 0.97 }}
-                  className={`relative shrink-0 snap-center rounded-lg overflow-hidden border-2 transition-all duration-300 w-[4.5rem] h-[3.25rem] sm:w-20 sm:h-14 ${
+                  className={`relative shrink-0 snap-center rounded-lg overflow-hidden border-2 transition-all duration-500 ease-out hover:scale-[1.03] w-[4.5rem] h-[3.25rem] sm:w-20 sm:h-14 ${
                     i === index
                       ? 'border-brand-400 shadow-lg shadow-brand-500/25'
                       : 'border-brand-800 opacity-70 hover:opacity-100'
@@ -229,10 +220,10 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
                       SAMPUL
                     </span>
                   )}
-                </motion.button>
+                </button>
               ))}
             </div>
-          </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

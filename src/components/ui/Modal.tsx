@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
+import { overlayPop } from '../../utils/motionVariants';
+import { tweenSmooth } from '../../utils/animationConfig';
 
 interface ModalProps {
   isOpen: boolean;
@@ -63,16 +65,16 @@ export const Modal: React.FC<ModalProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={tweenSmooth(0.4)}
             onClick={onClose}
             className="absolute inset-0 bg-brand-950/80 backdrop-blur-sm"
           />
 
-          {/* Modal Container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+            variants={overlayPop}
+            initial="initial"
+            animate="animate"
+            exit="exit"
             className={`relative w-full ${getSizeClass()} bg-brand-900 border border-brand-800 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] z-10`}
           >
             {/* Header */}

@@ -54,6 +54,7 @@ export const mapDbToMember = (dbRow: any): Member => ({
   status: (dbRow.status as 'active' | 'away' | 'offline') || 'offline',
   image: dbRow.photo || defaultSettings.logoPlaceholder,
   order: dbRow.sort_order || 0,
+  absen: dbRow.absen_number ?? dbRow.sort_order ?? 0,
 });
 
 export const mapMemberToDb = (member: Omit<Member, 'id'>) => ({
@@ -67,12 +68,14 @@ export const mapMemberToDb = (member: Omit<Member, 'id'>) => ({
   status: member.status,
   photo: member.image,
   sort_order: member.order,
+  absen_number: member.absen,
 });
 
 export const fetchMembers = async (): Promise<Member[]> => {
   const { data, error } = await supabase
     .from('member')
     .select('*')
+    .order('absen_number', { ascending: true })
     .order('sort_order', { ascending: true });
   if (error) throw error;
   return (data || []).map(mapDbToMember);
@@ -100,6 +103,7 @@ export const editMemberDb = async (id: string, updatedFields: Partial<Member>): 
   if (updatedFields.status !== undefined) updatePayload.status = updatedFields.status;
   if (updatedFields.image !== undefined) updatePayload.photo = updatedFields.image;
   if (updatedFields.order !== undefined) updatePayload.sort_order = updatedFields.order;
+  if (updatedFields.absen !== undefined) updatePayload.absen_number = updatedFields.absen;
 
   const { data, error } = await supabase
     .from('member')
@@ -544,6 +548,7 @@ export const mapDbToSettings = (row: any): SystemSettings => ({
   showStats: row.show_stats ?? defaultSettings.showStats,
   showSchedulePreview: row.show_schedule_preview ?? defaultSettings.showSchedulePreview,
   showActivityLog: row.show_activity_log ?? defaultSettings.showActivityLog,
+  showAttendancePreview: row.show_attendance_preview ?? defaultSettings.showAttendancePreview,
   heroTitle: row.hero_title || defaultSettings.heroTitle,
   heroSubtitle: row.hero_subtitle || defaultSettings.heroSubtitle,
   logoHeader: row.logo_header || defaultSettings.logoHeader,
@@ -567,6 +572,7 @@ export const mapSettingsToDb = (s: SystemSettings) => ({
   show_stats: s.showStats,
   show_schedule_preview: s.showSchedulePreview,
   show_activity_log: s.showActivityLog,
+  show_attendance_preview: s.showAttendancePreview,
   hero_title: s.heroTitle,
   hero_subtitle: s.heroSubtitle,
   logo_header: s.logoHeader,

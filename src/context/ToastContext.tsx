@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { softSpring, tweenSmooth } from '../utils/animationConfig';
 import { CheckCircle2, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -58,9 +59,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             <motion.div
               key={t.id}
               layout
-              initial={{ opacity: 0, y: 50, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
+              initial={{ opacity: 0, y: 24, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1, transition: softSpring }}
+              exit={{ opacity: 0, y: 12, scale: 0.97, transition: tweenSmooth(0.35) }}
               className="glass-panel p-4 rounded-xl flex items-start justify-between gap-3 shadow-xl pointer-events-auto overflow-hidden border border-brand-700 bg-brand-900/90"
             >
               {/* Type Border Highlight */}
