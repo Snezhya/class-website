@@ -78,3 +78,24 @@ export const overlayPop = {
   animate: { opacity: 1, scale: 1, y: 0, transition: tweenSmooth(0.5) },
   exit: { opacity: 0, scale: 0.98, y: 8, transition: tweenSmooth(0.38) },
 };
+
+/** Galeri lightbox — slide + fade (custom = arah: 1 maju, -1 mundur) */
+export const lightboxSlideFade = {
+  enter: (direction: number) => ({
+    x: direction === 0 ? 0 : direction > 0 ? '18%' : '-18%',
+    opacity: 0,
+    scale: 0.96,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    scale: 1,
+    transition: tweenSmooth(0.44),
+  },
+  exit: (direction: number) => ({
+    x: direction === 0 ? 0 : direction > 0 ? '-14%' : '14%',
+    opacity: 0,
+    scale: 0.97,
+    transition: tweenSmooth(0.36),
+  }),
+};

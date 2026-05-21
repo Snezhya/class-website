@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Calendar, Images, Pencil } from 'lucide-react';
 import { type GalleryAlbum } from '../../data/initialData';
 import { type LightboxSlide, prefersReducedMotion } from '../../utils/galleryUtils';
+import { lightboxSlideFade } from '../../utils/motionVariants';
 
 interface GalleryLightboxProps {
   album: GalleryAlbum;
@@ -25,6 +26,8 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
   onEdit,
 }) => {
   const [index, setIndex] = useState(initialIndex);
+  /** 1 = foto berikutnya, -1 = sebelumnya (untuk animasi slide) */
+  const [slideDirection, setSlideDirection] = useState(0);
   const thumbStripRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
   const reduced = prefersReducedMotion();
@@ -34,15 +37,28 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
   const isCover = index === 0;
 
   useEffect(() => {
-    if (isOpen) setIndex(initialIndex);
+    if (isOpen) {
+      setIndex(initialIndex);
+      setSlideDirection(0);
+    }
   }, [isOpen, initialIndex]);
 
-  const goTo = useCallback(
-    (next: number) => {
-      if (slides.length === 0) return;
-      setIndex((next + slides.length) % slides.length);
+  const paginate = useCallback(
+    (delta: 1 | -1) => {
+      if (slides.length <= 1) return;
+      setSlideDirection(delta);
+      setIndex((prev) => (prev + delta + slides.length) % slides.length);
     },
     [slides.length]
+  );
+
+  const goToIndex = useCallback(
+    (target: number) => {
+      if (slides.length === 0 || target === index) return;
+      setSlideDirection(target > index ? 1 : -1);
+      setIndex(target);
+    },
+    [index, slides.length]
   );
 
   useEffect(() => {
@@ -57,8 +73,8 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
     if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft') goTo(index - 1);
-      if (e.key === 'ArrowRight') goTo(index + 1);
+      if (e.key === 'ArrowLeft') paginate(-1);
+      if (e.key === 'ArrowRight') paginate(1);
     };
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -67,7 +83,7 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
       document.body.style.overflow = prevOverflow;
       window.removeEventListener('keydown', onKey);
     };
-  }, [isOpen, index, goTo, onClose]);
+  }, [isOpen, index, paginate, onClose]);
 
   if (!isOpen || !current) return null;
 
@@ -122,7 +138,7 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
             onTouchEnd={(e) => {
               if (touchStartX.current === null || !hasMultiple) return;
               const dx = (e.changedTouches[0]?.clientX ?? 0) - touchStartX.current;
-              if (Math.abs(dx) > 48) goTo(dx > 0 ? index - 1 : index + 1);
+              if (Math.abs(dx) > 48) paginate(dx > 0 ? -1 : 1);
               touchStartX.current = null;
             }}
           >
@@ -130,7 +146,7 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
               <>
                 <button
                   type="button"
-                  onClick={() => goTo(index - 1)}
+                  onClick={() => paginate(-1)}
                   className="absolute left-2 sm:left-4 z-10 p-2 sm:p-3 rounded-full bg-brand-900/90 border border-brand-700 text-white hover:bg-brand-800 transition-colors"
                   aria-label="Sebelumnya"
                 >
@@ -138,7 +154,7 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => goTo(index + 1)}
+                  onClick={() => paginate(1)}
                   className="absolute right-2 sm:right-4 z-10 p-2 sm:p-3 rounded-full bg-brand-900/90 border border-brand-700 text-white hover:bg-brand-800 transition-colors"
                   aria-label="Berikutnya"
                 >
@@ -147,19 +163,47 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
               </>
             )}
 
-            <div className="flex flex-col items-center justify-center w-full h-full max-h-full gap-2 pointer-events-none">
-              {isCover && (
-                <span className="text-[9px] font-mono text-terminal-cyan bg-brand-950/90 px-2 py-0.5 rounded border border-brand-700 pointer-events-auto">
-                  SAMPUL ALBUM
-                </span>
+            <div className="relative flex flex-col items-center justify-center w-full h-full max-h-full gap-2 overflow-hidden pointer-events-none">
+              {reduced ? (
+                <>
+                  {isCover && (
+                    <span className="text-[9px] font-mono text-terminal-cyan bg-brand-950/90 px-2 py-0.5 rounded border border-brand-700 pointer-events-auto">
+                      SAMPUL ALBUM
+                    </span>
+                  )}
+                  <img
+                    key={current.id}
+                    src={current.image}
+                    alt={album.title}
+                    className="pointer-events-auto block max-w-[min(100%,min(90vw,56rem))] max-h-[min(calc(100vh-12rem),70vh)] w-auto h-auto object-contain rounded-lg border border-brand-800 shadow-2xl mx-auto"
+                    draggable={false}
+                  />
+                </>
+              ) : (
+                <AnimatePresence mode="wait" custom={slideDirection} initial={false}>
+                  <motion.div
+                    key={current.id}
+                    custom={slideDirection}
+                    variants={lightboxSlideFade}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    className="flex flex-col items-center justify-center gap-2 w-full"
+                  >
+                    {isCover && (
+                      <span className="text-[9px] font-mono text-terminal-cyan bg-brand-950/90 px-2 py-0.5 rounded border border-brand-700 pointer-events-auto">
+                        SAMPUL ALBUM
+                      </span>
+                    )}
+                    <img
+                      src={current.image}
+                      alt={album.title}
+                      className="pointer-events-auto block max-w-[min(100%,min(90vw,56rem))] max-h-[min(calc(100vh-12rem),70vh)] w-auto h-auto object-contain rounded-lg border border-brand-800 shadow-2xl mx-auto"
+                      draggable={false}
+                    />
+                  </motion.div>
+                </AnimatePresence>
               )}
-              <img
-                key={current.id}
-                src={current.image}
-                alt={album.title}
-                className="pointer-events-auto block max-w-[min(100%,min(90vw,56rem))] max-h-[min(calc(100vh-12rem),70vh)] w-auto h-auto object-contain rounded-lg border border-brand-800 shadow-2xl mx-auto"
-                draggable={false}
-              />
             </div>
 
             {hasMultiple && (
@@ -191,7 +235,7 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
                     key={slide.id}
                     type="button"
                     data-active={i === index ? 'true' : 'false'}
-                    onClick={() => setIndex(i)}
+                    onClick={() => goToIndex(i)}
                     className={`relative shrink-0 snap-center rounded-lg overflow-hidden border-2 transition-all duration-300 w-16 h-12 sm:w-20 sm:h-14 ${
                       i === index
                         ? 'border-brand-400 shadow-lg shadow-brand-500/25 opacity-100'
