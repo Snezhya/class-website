@@ -47,14 +47,26 @@ export interface ClassNote {
   author: string;
 }
 
-export interface GalleryItem {
+/** Foto anak di dalam satu album */
+export interface GalleryPhoto {
+  id: string;
+  image: string;
+  sortOrder: number;
+}
+
+/** Album = 1 thumbnail di halaman; berisi banyak foto saat inspect */
+export interface GalleryAlbum {
   id: string;
   title: string;
   category: 'Practicum' | 'Event' | 'Exam' | 'Classroom';
   description: string;
-  image: string;
+  coverImage: string;
   date: string;
+  photos: GalleryPhoto[];
 }
+
+/** @deprecated gunakan GalleryAlbum */
+export type GalleryItem = GalleryAlbum & { image?: string };
 
 export interface SystemSettings {
   theme: 'dark-navy' | 'dark-slate' | 'pure-black';
@@ -334,31 +346,37 @@ export const initialNotes: ClassNote[] = [
   }
 ];
 
-export const initialGallery: GalleryItem[] = [
+export const initialGallery: GalleryAlbum[] = [
   {
     id: 'g1',
     title: 'Fusion Splicing Fiber Optic Practicum',
     category: 'Practicum',
     description: 'Siswa kelas XI TJKT 1 melakukan penyambungan serat optik core-to-core menggunakan Fujikura Fusion Splicer.',
-    image: '/hu-tao-placeholder.png',
-    date: '2026-05-10'
+    coverImage: '/hu-tao-placeholder.png',
+    date: '2026-05-10',
+    photos: [
+      { id: 'g1-p1', image: '/hu-tao-placeholder.png', sortOrder: 1 },
+      { id: 'g1-p2', image: '/hu-tao-placeholder.png', sortOrder: 2 },
+    ],
   },
   {
     id: 'g2',
     title: 'Server Rack Assembly & Cabling Lan',
     category: 'Classroom',
     description: 'Merakit switch, patch panel, dan router Mikrotik CCR ke dalam rack server baru milik lab sekolah.',
-    image: '/hu-tao-placeholder.png',
-    date: '2026-05-12'
+    coverImage: '/hu-tao-placeholder.png',
+    date: '2026-05-12',
+    photos: [],
   },
   {
     id: 'g3',
     title: 'Ujian Kompetensi Keahlian (UKK) Jaringan',
     category: 'Exam',
     description: 'Sesi evaluasi konfigurasi VLAN, Routing, dan bandwidth management bersama penguji industri.',
-    image: '/hu-tao-placeholder.png',
-    date: '2026-05-15'
-  }
+    coverImage: '/hu-tao-placeholder.png',
+    date: '2026-05-15',
+    photos: [{ id: 'g3-p1', image: '/hu-tao-placeholder.png', sortOrder: 1 }],
+  },
 ];
 
 export const defaultSettings: SystemSettings = {

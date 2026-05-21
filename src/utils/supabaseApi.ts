@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import {
-  type Member, type Task, type ScheduleItem, type ClassNote, type GalleryItem,
+  type Member, type Task, type ScheduleItem, type ClassNote,
+  type GalleryAlbum, type GalleryPhoto,
   type SystemSettings, defaultSettings,
 } from '../data/initialData';
 
@@ -14,7 +15,18 @@ const uploadImage = async (bucket: string, folder: string, file: File): Promise<
   const filePath = `${folder}/${fileName}`;
 
   const { error } = await supabase.storage.from(bucket).upload(filePath, file, { upsert: false });
-  if (error) throw error;
+  if (error) {
+    const msg = error.message?.toLowerCase() ?? '';
+    if (msg.includes('bucket') && msg.includes('not found')) {
+      throw new Error(
+        `Bucket "${bucket}" belum ada. Buka Supabase → SQL Editor → jalankan file supabase/storage.sql`
+      );
+    }
+    if (msg.includes('row-level security') || msg.includes('policy')) {
+      throw new Error('Upload ditolak: login Admin dulu (Supabase Auth: admin@tjkt1.com)');
+    }
+    throw error;
+  }
 
   const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
   return data.publicUrl;
@@ -305,66 +317,131 @@ export const deleteNoteDb = async (id: string): Promise<void> => {
 };
 
 // ============================================================
-// GALLERY
+// GALLERY ALBUM (1 thumbnail + foto anak)
 // ============================================================
 
-export const mapDbToGallery = (row: any): GalleryItem => ({
+const mapDbToGalleryPhoto = (row: any): GalleryPhoto => ({
+  id: row.id.toString(),
+  image: row.image || '/hu-tao-placeholder.png',
+  sortOrder: row.sort_order ?? 0,
+});
+
+export const mapDbToGalleryAlbum = (row: any): GalleryAlbum => {
+  const photos = (row.gallery_photo || [])
+    .map(mapDbToGalleryPhoto)
+    .sort((a: GalleryPhoto, b: GalleryPhoto) => a.sortOrder - b.sortOrder);
+  return {
+    id: row.id.toString(),
+    title: row.title || '',
+    category: row.category || 'Event',
+    description: row.description || '',
+    coverImage: row.cover_image || '/hu-tao-placeholder.png',
+    date: row.date || new Date().toISOString().split('T')[0],
+    photos,
+  };
+};
+
+/** Fallback: tabel lama `gallery` (1 baris = 1 album tanpa anak) */
+const mapLegacyGalleryRow = (row: any): GalleryAlbum => ({
   id: row.id.toString(),
   title: row.title || '',
-  category: (row.category as GalleryItem['category']) || 'Event',
+  category: row.category || 'Event',
   description: row.description || '',
-  image: row.image || '/hu-tao-placeholder.png',
+  coverImage: row.image || '/hu-tao-placeholder.png',
   date: row.date || new Date().toISOString().split('T')[0],
+  photos: [],
 });
 
-export const mapGalleryToDb = (item: Omit<GalleryItem, 'id'>) => ({
-  title: item.title,
-  category: item.category,
-  description: item.description,
-  image: item.image,
-  date: item.date,
-});
+const isMissingGalleryAlbumTable = (err: { code?: string; message?: string } | null) =>
+  err?.code === 'PGRST205' || (err?.message?.toLowerCase().includes('gallery_album') ?? false);
 
-export const fetchGallery = async (): Promise<GalleryItem[]> => {
+const galleryAlbumTableMissingError = () =>
+  new Error(
+    'Tabel gallery_album belum dibuat. Supabase Dashboard → SQL Editor → Run file supabase/gallery-album-migration.sql (tunggu ~10 detik lalu coba lagi).'
+  );
+
+export const fetchGalleryAlbums = async (): Promise<GalleryAlbum[]> => {
   const { data, error } = await supabase
-    .from('gallery')
-    .select('*')
+    .from('gallery_album')
+    .select('*, gallery_photo(*)')
     .order('created_at', { ascending: false });
-  if (error) throw error;
-  return (data || []).map(mapDbToGallery);
+
+  if (!error && data) {
+    return data.map(mapDbToGalleryAlbum);
+  }
+
+  const legacy = await supabase.from('gallery').select('*').order('created_at', { ascending: false });
+  if (legacy.error) throw error || legacy.error;
+  return (legacy.data || []).map(mapLegacyGalleryRow);
 };
 
-export const addGalleryDb = async (item: Omit<GalleryItem, 'id'>): Promise<GalleryItem> => {
-  const { data, error } = await supabase
-    .from('gallery')
-    .insert([mapGalleryToDb(item)])
+export const addGalleryAlbumDb = async (input: {
+  title: string;
+  description: string;
+  category: GalleryAlbum['category'];
+  date: string;
+  coverImage: string;
+  childImageUrls: string[];
+}): Promise<GalleryAlbum> => {
+  const { data: album, error: albumErr } = await supabase
+    .from('gallery_album')
+    .insert([{
+      title: input.title,
+      description: input.description,
+      category: input.category,
+      cover_image: input.coverImage,
+      date: input.date,
+    }])
     .select()
     .single();
-  if (error) throw error;
-  return mapDbToGallery(data);
-};
 
-export const editGalleryDb = async (id: string, fields: Partial<GalleryItem>): Promise<GalleryItem> => {
-  const payload: any = {};
-  if (fields.title !== undefined) payload.title = fields.title;
-  if (fields.category !== undefined) payload.category = fields.category;
-  if (fields.description !== undefined) payload.description = fields.description;
-  if (fields.image !== undefined) payload.image = fields.image;
-  if (fields.date !== undefined) payload.date = fields.date;
+  if (albumErr) {
+    if (isMissingGalleryAlbumTable(albumErr)) {
+      if (input.childImageUrls.length > 0) {
+        throw galleryAlbumTableMissingError();
+      }
+      const { data: legacy, error: legacyErr } = await supabase
+        .from('gallery')
+        .insert([{
+          title: input.title,
+          description: input.description,
+          category: input.category,
+          image: input.coverImage,
+          date: input.date,
+        }])
+        .select()
+        .single();
+      if (legacyErr) throw galleryAlbumTableMissingError();
+      return mapLegacyGalleryRow(legacy);
+    }
+    throw albumErr;
+  }
 
-  const { data, error } = await supabase
-    .from('gallery')
-    .update(payload)
-    .eq('id', parseInt(id))
-    .select()
+  if (input.childImageUrls.length > 0) {
+    const rows = input.childImageUrls.map((url, i) => ({
+      album_id: album.id,
+      image: url,
+      sort_order: i + 1,
+    }));
+    const { error: photoErr } = await supabase.from('gallery_photo').insert(rows);
+    if (photoErr) throw photoErr;
+  }
+
+  const { data: full, error: fetchErr } = await supabase
+    .from('gallery_album')
+    .select('*, gallery_photo(*)')
+    .eq('id', album.id)
     .single();
-  if (error) throw error;
-  return mapDbToGallery(data);
+  if (fetchErr) throw fetchErr;
+  return mapDbToGalleryAlbum(full);
 };
 
-export const deleteGalleryDb = async (id: string): Promise<void> => {
-  const { error } = await supabase.from('gallery').delete().eq('id', parseInt(id));
-  if (error) throw error;
+export const deleteGalleryAlbumDb = async (id: string): Promise<void> => {
+  const { error } = await supabase.from('gallery_album').delete().eq('id', parseInt(id));
+  if (error) {
+    const legacy = await supabase.from('gallery').delete().eq('id', parseInt(id));
+    if (legacy.error) throw error;
+  }
 };
 
 // ============================================================

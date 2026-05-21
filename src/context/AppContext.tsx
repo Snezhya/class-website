@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
-  type Member, type Task, type ScheduleItem, type ClassNote, type GalleryItem, type SystemSettings,
+  type Member, type Task, type ScheduleItem, type ClassNote, type GalleryAlbum, type SystemSettings,
   initialMembers, initialTasks, initialSchedule, initialNotes, initialGallery, defaultSettings 
 } from '../data/initialData';
 import { storage } from '../utils/storage';
@@ -10,7 +10,7 @@ import {
   fetchTasks, addTaskDb, editTaskDb, deleteTaskDb, mapDbToTask,
   fetchSchedules, addScheduleDb, editScheduleDb, deleteScheduleDb, mapDbToSchedule,
   fetchNotes, addNoteDb, editNoteDb, deleteNoteDb, mapDbToNote,
-  fetchGallery, addGalleryDb, editGalleryDb, deleteGalleryDb, mapDbToGallery,
+  fetchGalleryAlbums, addGalleryAlbumDb, deleteGalleryAlbumDb,
   fetchSettings, updateSettingsDb, resetSettingsDb, mapDbToSettings,
   fetchActivityLogs, addActivityLogDb,
 } from '../utils/supabaseApi';
@@ -20,7 +20,7 @@ interface AppContextType {
   tasks: Task[];
   schedules: ScheduleItem[];
   notes: ClassNote[];
-  gallery: GalleryItem[];
+  gallery: GalleryAlbum[];
   settings: SystemSettings;
   isAdmin: boolean;
   activityLogs: string[];
@@ -53,9 +53,14 @@ interface AppContextType {
   editNote: (id: string, note: Partial<ClassNote>) => Promise<void>;
   deleteNote: (id: string) => Promise<void>;
 
-  // Gallery CRUD
-  addGallery: (item: Omit<GalleryItem, 'id' | 'date'>) => Promise<void>;
-  editGallery: (id: string, item: Partial<GalleryItem>) => Promise<void>;
+  // Gallery album CRUD (1 thumbnail + foto anak)
+  addGalleryAlbum: (input: {
+    title: string;
+    description: string;
+    category: GalleryAlbum['category'];
+    coverImage: string;
+    childImageUrls: string[];
+  }) => Promise<void>;
   deleteGallery: (id: string) => Promise<void>;
 
   // Settings
@@ -74,7 +79,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
   const [notes, setNotes] = useState<ClassNote[]>([]);
-  const [gallery, setGallery] = useState<GalleryItem[]>([]);
+  const [gallery, setGallery] = useState<GalleryAlbum[]>([]);
   const [dbLoading, setDbLoading] = useState<boolean>(true);
   const [dbError, setDbError] = useState<string | null>(null);
   const [settings, setSettings] = useState<SystemSettings>(() => storage.get('settings', defaultSettings));
@@ -127,7 +132,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       fetchTasks().catch((e: any) => { console.warn('task fetch', e); return storage.get('tasks', initialTasks); }),
       fetchSchedules().catch((e: any) => { console.warn('schedule fetch', e); return storage.get('schedules', initialSchedule); }),
       fetchNotes().catch((e: any) => { console.warn('note fetch', e); return storage.get('notes', initialNotes); }),
-      fetchGallery().catch((e: any) => { console.warn('gallery fetch', e); return storage.get('gallery', initialGallery); }),
+      fetchGalleryAlbums().catch((e: any) => { console.warn('gallery fetch', e); return storage.get('gallery', initialGallery); }),
       fetchSettings().catch(() => storage.get('settings', defaultSettings)),
       fetchActivityLogs().catch(() => storage.get('activity_logs', [])),
     ]).then(([mems, tsks, scheds, nts, gals, sets, logs]) => {
@@ -188,14 +193,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         else if (eventType === 'DELETE') setNotes(p => p.filter(x => x.id !== o.id?.toString()));
       }).subscribe();
 
-    // Realtime: gallery
-    const galleryChannel = supabase
-      .channel('rt:gallery')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'gallery' }, ({ eventType, new: n, old: o }) => {
-        addActivityLog(`REALTIME: gallery [${eventType}]`);
-        if (eventType === 'INSERT') setGallery(p => { const r = mapDbToGallery(n); return p.some(x => x.id === r.id) ? p : [r, ...p]; });
-        else if (eventType === 'UPDATE') setGallery(p => p.map(x => x.id === n.id?.toString() ? mapDbToGallery(n) : x));
-        else if (eventType === 'DELETE') setGallery(p => p.filter(x => x.id !== o.id?.toString()));
+    const refreshGallery = () => {
+      fetchGalleryAlbums()
+        .then((g) => { setGallery(g); storage.set('gallery', g); })
+        .catch(() => {});
+    };
+
+    const galleryAlbumChannel = supabase
+      .channel('rt:gallery_album')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'gallery_album' }, ({ eventType }) => {
+        addActivityLog(`REALTIME: gallery_album [${eventType}]`);
+        refreshGallery();
+      }).subscribe();
+
+    const galleryPhotoChannel = supabase
+      .channel('rt:gallery_photo')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'gallery_photo' }, ({ eventType }) => {
+        addActivityLog(`REALTIME: gallery_photo [${eventType}]`);
+        refreshGallery();
       }).subscribe();
 
     const settingsChannel = supabase
@@ -228,7 +243,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       supabase.removeChannel(taskChannel);
       supabase.removeChannel(scheduleChannel);
       supabase.removeChannel(noteChannel);
-      supabase.removeChannel(galleryChannel);
+      supabase.removeChannel(galleryAlbumChannel);
+      supabase.removeChannel(galleryPhotoChannel);
       supabase.removeChannel(settingsChannel);
       supabase.removeChannel(logChannel);
     };
@@ -579,46 +595,51 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  // Gallery Operations
-  const addGallery = async (newItem: Omit<GalleryItem, 'id' | 'date'>) => {
+  const addGalleryAlbum = async (input: {
+    title: string;
+    description: string;
+    category: GalleryAlbum['category'];
+    coverImage: string;
+    childImageUrls: string[];
+  }) => {
     const date = new Date().toISOString().split('T')[0];
     if (hasSupabase) {
       try {
-        const added = await addGalleryDb({ ...newItem, date });
-        setGallery(prev => prev.some(g => g.id === added.id) ? prev : [added, ...prev]);
-        addActivityLog(`GALLERY DAEMON: Cataloged '${added.title}' → Supabase`);
+        const added = await addGalleryAlbumDb({ ...input, date });
+        setGallery((prev) => (prev.some((g) => g.id === added.id) ? prev : [added, ...prev]));
+        const total = 1 + added.photos.length;
+        addActivityLog(`GALLERY DAEMON: Album '${added.title}' (${total} foto) → Supabase`);
       } catch (err: any) { addActivityLog(`GALLERY DAEMON: Insert error - ${err.message}`); throw err; }
     } else {
-      const item: GalleryItem = { ...newItem, date, id: Math.random().toString(36).substring(2, 9) };
-      setGallery(prev => [item, ...prev]);
-      addActivityLog(`GALLERY DAEMON: Cataloged '${item.title}' locally.`);
-    }
-  };
-
-  const editGallery = async (id: string, updatedData: Partial<GalleryItem>) => {
-    if (hasSupabase) {
-      try {
-        const updated = await editGalleryDb(id, updatedData);
-        setGallery(prev => prev.map(g => g.id === id ? updated : g));
-        addActivityLog(`GALLERY DAEMON: Updated '${updated.title}' → Supabase`);
-      } catch (err: any) { addActivityLog(`GALLERY DAEMON: Update error - ${err.message}`); throw err; }
-    } else {
-      setGallery(prev => prev.map(g => g.id === id ? { ...g, ...updatedData } : g));
-      addActivityLog(`GALLERY DAEMON: Updated gallery '${id}' locally.`);
+      const item: GalleryAlbum = {
+        id: Math.random().toString(36).substring(2, 9),
+        title: input.title,
+        description: input.description,
+        category: input.category,
+        coverImage: input.coverImage,
+        date,
+        photos: input.childImageUrls.map((url, i) => ({
+          id: `p-${i}`,
+          image: url,
+          sortOrder: i + 1,
+        })),
+      };
+      setGallery((prev) => [item, ...prev]);
+      addActivityLog(`GALLERY DAEMON: Album '${item.title}' locally.`);
     }
   };
 
   const deleteGallery = async (id: string) => {
-    const item = gallery.find(g => g.id === id);
+    const item = gallery.find((g) => g.id === id);
     if (hasSupabase) {
       try {
-        await deleteGalleryDb(id);
-        setGallery(prev => prev.filter(g => g.id !== id));
-        addActivityLog(`GALLERY DAEMON: Erased '${item?.title || id}' → Supabase`);
+        await deleteGalleryAlbumDb(id);
+        setGallery((prev) => prev.filter((g) => g.id !== id));
+        addActivityLog(`GALLERY DAEMON: Erased album '${item?.title || id}' → Supabase`);
       } catch (err: any) { addActivityLog(`GALLERY DAEMON: Delete error - ${err.message}`); throw err; }
     } else {
-      setGallery(prev => prev.filter(g => g.id !== id));
-      addActivityLog(`GALLERY DAEMON: Erased '${item?.title || id}' locally.`);
+      setGallery((prev) => prev.filter((g) => g.id !== id));
+      addActivityLog(`GALLERY DAEMON: Erased album '${item?.title || id}' locally.`);
     }
   };
 
@@ -655,7 +676,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       addTask, editTask, deleteTask, toggleTaskCompleted,
       addSchedule, editSchedule, deleteSchedule,
       addNote, editNote, deleteNote,
-      addGallery, editGallery, deleteGallery,
+      addGalleryAlbum, deleteGallery,
       updateSettings, resetSettings, addActivityLog
     }}>
       {children}

@@ -61,16 +61,27 @@ CREATE TABLE IF NOT EXISTS public.note (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS public.gallery (
+-- Album = thumbnail di UI; gallery_photo = foto anak (inspect only)
+CREATE TABLE IF NOT EXISTS public.gallery_album (
   id          BIGSERIAL PRIMARY KEY,
   title       TEXT NOT NULL DEFAULT '',
   category    TEXT NOT NULL DEFAULT 'Event'
                 CHECK (category IN ('Practicum', 'Event', 'Exam', 'Classroom')),
   description TEXT NOT NULL DEFAULT '',
-  image       TEXT NOT NULL DEFAULT '/hu-tao-placeholder.png',
+  cover_image TEXT NOT NULL DEFAULT '/hu-tao-placeholder.png',
   date        DATE NOT NULL DEFAULT CURRENT_DATE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+CREATE TABLE IF NOT EXISTS public.gallery_photo (
+  id          BIGSERIAL PRIMARY KEY,
+  album_id    BIGINT NOT NULL REFERENCES public.gallery_album(id) ON DELETE CASCADE,
+  image       TEXT NOT NULL DEFAULT '/hu-tao-placeholder.png',
+  sort_order  INTEGER NOT NULL DEFAULT 0,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_gallery_photo_album ON public.gallery_photo(album_id);
 
 -- Theme & admin panel (satu baris global, id = 1)
 CREATE TABLE IF NOT EXISTS public.app_settings (
@@ -109,7 +120,8 @@ ALTER TABLE public.member        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.task          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.schedule      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.note          ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.gallery       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.gallery_album ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.gallery_photo ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.app_settings  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.activity_log  ENABLE ROW LEVEL SECURITY;
 
@@ -122,8 +134,10 @@ DROP POLICY IF EXISTS "Public read schedule"      ON public.schedule;
 DROP POLICY IF EXISTS "Auth write schedule"       ON public.schedule;
 DROP POLICY IF EXISTS "Public read note"          ON public.note;
 DROP POLICY IF EXISTS "Auth write note"           ON public.note;
-DROP POLICY IF EXISTS "Public read gallery"       ON public.gallery;
-DROP POLICY IF EXISTS "Auth write gallery"        ON public.gallery;
+DROP POLICY IF EXISTS "Public read gallery_album"  ON public.gallery_album;
+DROP POLICY IF EXISTS "Auth write gallery_album"   ON public.gallery_album;
+DROP POLICY IF EXISTS "Public read gallery_photo"  ON public.gallery_photo;
+DROP POLICY IF EXISTS "Auth write gallery_photo"   ON public.gallery_photo;
 DROP POLICY IF EXISTS "Public read app_settings"  ON public.app_settings;
 DROP POLICY IF EXISTS "Auth write app_settings"   ON public.app_settings;
 DROP POLICY IF EXISTS "Public read activity_log"  ON public.activity_log;
@@ -135,7 +149,8 @@ CREATE POLICY "Public read member"       ON public.member       FOR SELECT USING
 CREATE POLICY "Public read task"         ON public.task         FOR SELECT USING (true);
 CREATE POLICY "Public read schedule"     ON public.schedule     FOR SELECT USING (true);
 CREATE POLICY "Public read note"         ON public.note         FOR SELECT USING (true);
-CREATE POLICY "Public read gallery"      ON public.gallery      FOR SELECT USING (true);
+CREATE POLICY "Public read gallery_album"  ON public.gallery_album  FOR SELECT USING (true);
+CREATE POLICY "Public read gallery_photo"  ON public.gallery_photo  FOR SELECT USING (true);
 CREATE POLICY "Public read app_settings" ON public.app_settings FOR SELECT USING (true);
 CREATE POLICY "Public read activity_log" ON public.activity_log FOR SELECT USING (true);
 
@@ -144,7 +159,8 @@ CREATE POLICY "Auth write member"       ON public.member       FOR ALL TO authen
 CREATE POLICY "Auth write task"         ON public.task         FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Auth write schedule"     ON public.schedule     FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Auth write note"         ON public.note         FOR ALL TO authenticated USING (true) WITH CHECK (true);
-CREATE POLICY "Auth write gallery"      ON public.gallery      FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Auth write gallery_album"  ON public.gallery_album  FOR ALL TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Auth write gallery_photo"  ON public.gallery_photo  FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Auth write app_settings" ON public.app_settings FOR ALL TO authenticated USING (true) WITH CHECK (true);
 CREATE POLICY "Auth insert activity_log" ON public.activity_log FOR INSERT TO authenticated WITH CHECK (true);
 CREATE POLICY "Auth delete activity_log" ON public.activity_log FOR DELETE TO authenticated USING (true);
@@ -155,7 +171,8 @@ DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.member;        
 DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.task;          EXCEPTION WHEN OTHERS THEN NULL; END $$;
 DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.schedule;      EXCEPTION WHEN OTHERS THEN NULL; END $$;
 DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.note;          EXCEPTION WHEN OTHERS THEN NULL; END $$;
-DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.gallery;       EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.gallery_album;  EXCEPTION WHEN OTHERS THEN NULL; END $$;
+DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.gallery_photo;  EXCEPTION WHEN OTHERS THEN NULL; END $$;
 DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.app_settings;  EXCEPTION WHEN OTHERS THEN NULL; END $$;
 DO $$ BEGIN ALTER PUBLICATION supabase_realtime ADD TABLE public.activity_log;  EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
