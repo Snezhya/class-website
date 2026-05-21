@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Card } from '../components/ui/Card';
@@ -10,8 +10,6 @@ import { type Member } from '../data/initialData';
 import { sortByAbsen } from '../utils/attendance';
 import { TerminalOutput } from '../components/motion/TerminalOutput';
 import { MotionCard } from '../components/motion/MotionCard';
-import { ScrollReveal } from '../components/motion/ScrollReveal';
-import { useGsapScrollReveal } from '../hooks/useGsapScrollReveal';
 
 const Github = (props: any) => (
   <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -43,7 +41,6 @@ export const Members: React.FC = () => {
   const [selectedRole, setSelectedRole] = useState<'all' | 'core' | 'member'>('all');
   const [viewByAbsen, setViewByAbsen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [inspectLines, setInspectLines] = useState<string[]>([]);
 
   // URL search parameter check
@@ -54,12 +51,6 @@ export const Members: React.FC = () => {
       setSearchQuery(searchVal);
     }
   }, [location]);
-
-  useGsapScrollReveal(containerRef, '[data-anim-role="scroll-reveal"]', [
-    searchQuery,
-    selectedRole,
-    viewByAbsen,
-  ]);
 
   // Filters logic
   const filteredMembers = members.filter(m => {
@@ -119,7 +110,7 @@ export const Members: React.FC = () => {
   return (
     <div className="space-y-8">
       {/* Search and Filters Header */}
-      <ScrollReveal className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-brand-900/40 p-4 border border-brand-800 rounded-xl">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-brand-900/40 p-4 border border-brand-800 rounded-xl">
         <div className="relative w-full md:max-w-xs">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
           <input
@@ -164,10 +155,9 @@ export const Members: React.FC = () => {
             Urut Absen
           </Button>
         </div>
-      </ScrollReveal>
+      </div>
 
-      {/* Roster Layout Directory */}
-      <div ref={containerRef} className="space-y-12">
+      <div className="space-y-12">
         {dbLoading ? (
           <div className="flex flex-col items-center justify-center p-12 space-y-4 border border-dashed border-brand-800 rounded-xl bg-brand-950/20 font-mono text-xs text-terminal-green">
             <div className="flex items-center gap-2">
@@ -187,9 +177,8 @@ export const Members: React.FC = () => {
           <Card title="Daftar urut nomor absen" className="max-w-2xl mx-auto">
             <div className="space-y-2">
               {absenList.map((member) => (
-                <ScrollReveal key={member.id}>
-                  <MotionCard
-                    hoverOnly
+                <MotionCard
+                    key={member.id}
                     onClick={() => handleInspectMember(member)}
                     className="flex items-center gap-4 p-3 rounded-xl border border-brand-800 bg-brand-900/30 hover:border-brand-600/50 cursor-pointer"
                   >
@@ -213,7 +202,6 @@ export const Members: React.FC = () => {
                   )}
                   <span className={`w-2 h-2 rounded-full shrink-0 ${getStatusColor(member.status)}`} />
                   </MotionCard>
-                </ScrollReveal>
               ))}
             </div>
           </Card>
@@ -335,12 +323,15 @@ export const Members: React.FC = () => {
       {/* 3. Detailed Profile Inspector Modal (Terminal Linux UI) */}
       <Modal
         isOpen={!!selectedMember}
-        onClose={() => setSelectedMember(null)}
+        onClose={() => {
+          setSelectedMember(null);
+          setInspectLines([]);
+        }}
         title={selectedMember ? `profile_inspect.sh --target=${selectedMember.name.split(' ')[0]}` : ''}
         size="lg"
       >
         {selectedMember && (
-          <div className="space-y-6">
+          <div key={selectedMember.id} className="space-y-6">
             {/* Terminal Window frame mockup inside the modal */}
             <div className="bg-terminal-dark border border-brand-800 rounded-lg overflow-hidden shadow-2xl font-mono text-xs">
               <div className="flex items-center justify-between px-3 py-1.5 border-b border-brand-800 bg-brand-950/60 select-none">
@@ -351,8 +342,14 @@ export const Members: React.FC = () => {
                 <span className="w-1.5 h-1.5 rounded-full bg-terminal-green animate-pulse" />
               </div>
               
-              <div className="p-4 text-terminal-green/90 overflow-x-auto">
-                <TerminalOutput lines={inspectLines} active={!!selectedMember} />
+              <div className="p-4 text-terminal-green/90 overflow-x-auto min-h-[10rem]">
+                <TerminalOutput
+                  key={selectedMember.id}
+                  lines={inspectLines}
+                  active
+                  instant
+                  showCursor={false}
+                />
               </div>
             </div>
 

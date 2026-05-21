@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { uploadGalleryPhoto } from '../utils/supabaseApi';
 import { getAlbumSlides, getAlbumPhotoCount, prefersReducedMotion } from '../utils/galleryUtils';
@@ -11,12 +11,26 @@ import { useToast } from '../context/ToastContext';
 import { type GalleryAlbum } from '../data/initialData';
 import { GalleryAlbumEditor } from '../components/gallery/GalleryAlbumEditor';
 import { Image, Search, Plus, Calendar, Trash2, Eye, Layers, Pencil } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import gsap from 'gsap';
+import { motion } from 'framer-motion';
+import { softSpring, HOVER_LIFT_Y } from '../utils/animationConfig';
 
-import { gentleSpring, GSAP_SMOOTH_EASE } from '../utils/animationConfig';
-
-const springTransition = gentleSpring;
+/** Framer: hover ringan saja — kartu langsung tampil */
+const GalleryCardInner: React.FC<{
+  children: React.ReactNode;
+  onClick: () => void;
+  reduced: boolean;
+}> = ({ children, onClick, reduced }) => (
+  <motion.div
+    data-anim-layer="framer"
+    data-anim-role="gallery-card-hover"
+    onClick={onClick}
+    whileHover={reduced ? {} : { y: HOVER_LIFT_Y }}
+    transition={softSpring}
+    className="cursor-pointer group relative rounded-xl overflow-hidden border border-brand-800 hover:border-brand-500/50 bg-brand-900/20 shadow-lg hover:shadow-2xl transition-[border-color,box-shadow] duration-500 ease-out h-full"
+  >
+    {children}
+  </motion.div>
+);
 
 export const Gallery: React.FC = () => {
   const { gallery, addGalleryAlbum, deleteGallery, isAdmin } = useApp();
@@ -35,8 +49,6 @@ export const Gallery: React.FC = () => {
   const [formPreview, setFormPreview] = useState('/hu-tao-placeholder.png');
   const [isUploading, setIsUploading] = useState(false);
 
-  const gridRef = useRef<HTMLDivElement>(null);
-  const headerRef = useRef<HTMLDivElement>(null);
   const reduced = prefersReducedMotion();
 
   const filteredAlbums = gallery.filter((album) => {
@@ -46,26 +58,6 @@ export const Gallery: React.FC = () => {
     const matchesCategory = activeCategory === 'All' ? true : album.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
-
-  useEffect(() => {
-    if (!gridRef.current || filteredAlbums.length === 0) return;
-    const cards = gridRef.current.querySelectorAll('.gallery-card-anim');
-    gsap.killTweensOf(cards);
-    if (reduced) {
-      gsap.set(cards, { opacity: 1, y: 0, scale: 1 });
-      return;
-    }
-    gsap.fromTo(
-      cards,
-      { opacity: 0, y: 16, scale: 0.98 },
-      { opacity: 1, y: 0, scale: 1, duration: 0.85, stagger: 0.08, ease: GSAP_SMOOTH_EASE }
-    );
-  }, [filteredAlbums.length, activeCategory, searchQuery, reduced]);
-
-  useEffect(() => {
-    if (!headerRef.current || reduced) return;
-    gsap.fromTo(headerRef.current, { opacity: 0, y: -8 }, { opacity: 1, y: 0, duration: 0.9, ease: GSAP_SMOOTH_EASE });
-  }, [reduced]);
 
   useEffect(() => {
     if (!inspectAlbum) return;
@@ -144,8 +136,7 @@ export const Gallery: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div ref={headerRef}>
-        <Card className="p-6 bg-gradient-to-r from-brand-900/60 to-brand-800/40 border border-brand-800">
+      <Card className="p-6 bg-gradient-to-r from-brand-900/60 to-brand-800/40 border border-brand-800">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-1">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
@@ -171,9 +162,8 @@ export const Gallery: React.FC = () => {
             )}
           </div>
         </Card>
-      </div>
 
-      <motion.div layout className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-brand-900/40 p-4 border border-brand-800 rounded-xl">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-brand-900/40 p-4 border border-brand-800 rounded-xl">
         <div className="relative w-full md:max-w-xs">
           <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
           <input
@@ -186,18 +176,17 @@ export const Gallery: React.FC = () => {
         </div>
         <div className="flex gap-1 overflow-x-auto pb-1 w-full md:w-auto">
           {(['All', 'Practicum', 'Classroom', 'Event', 'Exam'] as const).map((cat) => (
-            <motion.div key={cat} layout transition={springTransition}>
-              <Button
-                variant={activeCategory === cat ? 'primary' : 'secondary'}
-                size="sm"
-                onClick={() => setActiveCategory(cat)}
-              >
-                {cat}
-              </Button>
-            </motion.div>
+            <Button
+              key={cat}
+              variant={activeCategory === cat ? 'primary' : 'secondary'}
+              size="sm"
+              onClick={() => setActiveCategory(cat)}
+            >
+              {cat}
+            </Button>
           ))}
         </div>
-      </motion.div>
+      </div>
 
       {filteredAlbums.length === 0 ? (
         <EmptyState
@@ -208,21 +197,14 @@ export const Gallery: React.FC = () => {
           icon={Image}
         />
       ) : (
-        <div ref={gridRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          <AnimatePresence mode="popLayout">
-            {filteredAlbums.map((album) => {
-              const photoCount = getAlbumPhotoCount(album);
-              return (
-                <motion.div
-                  key={album.id}
-                  layout
-                  layoutId={`album-${album.id}`}
-                  initial={reduced ? false : { opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={reduced ? undefined : { opacity: 0, scale: 0.95 }}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {filteredAlbums.map((album) => {
+            const photoCount = getAlbumPhotoCount(album);
+            return (
+              <div key={album.id} className="gallery-card-wrapper">
+                <GalleryCardInner
+                  reduced={reduced}
                   onClick={() => setInspectAlbum(album)}
-                  data-anim-layer="gsap"
-                  className="gallery-card-anim cursor-pointer group relative rounded-xl overflow-hidden border border-brand-800 hover:border-brand-500/50 bg-brand-900/20 shadow-lg hover:shadow-2xl transition-[border-color,box-shadow] duration-500 ease-out"
                 >
                   <div className="relative aspect-video overflow-hidden bg-brand-950">
                     <img
@@ -240,13 +222,10 @@ export const Gallery: React.FC = () => {
                         {photoCount} foto
                       </span>
                     )}
-                    <div className="absolute inset-0 bg-brand-950/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                      <motion.div
-                        whileHover={reduced ? {} : { scale: 1.1 }}
-                        className="w-10 h-10 rounded-full bg-brand-800 border border-brand-700 flex items-center justify-center text-white"
-                      >
+                    <div className="absolute inset-0 bg-brand-950/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center pointer-events-none">
+                      <div className="w-10 h-10 rounded-full bg-brand-800 border border-brand-700 flex items-center justify-center text-white">
                         <Eye className="w-5 h-5" />
-                      </motion.div>
+                      </div>
                     </div>
                   </div>
                   <div className="p-4 space-y-2">
@@ -260,7 +239,7 @@ export const Gallery: React.FC = () => {
                     <p className="text-xs text-slate-400 line-clamp-2">{album.description}</p>
                   </div>
                   {isAdmin && (
-                    <div className="absolute bottom-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                       <button
                         type="button"
                         onClick={(e) => openEdit(album, e)}
@@ -279,16 +258,16 @@ export const Gallery: React.FC = () => {
                       </button>
                     </div>
                   )}
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
+                </GalleryCardInner>
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {inspectAlbum && (
+      {inspectAlbum && slides.length > 0 && (
         <GalleryLightbox
-          isOpen={!!inspectAlbum}
+          isOpen
           album={inspectAlbum}
           slides={slides}
           initialIndex={0}

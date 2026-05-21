@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import gsap from 'gsap';
-import { animate } from 'animejs';
 import { X, ChevronLeft, ChevronRight, Calendar, Images, Pencil } from 'lucide-react';
 import { type GalleryAlbum } from '../../data/initialData';
 import { type LightboxSlide, prefersReducedMotion } from '../../utils/galleryUtils';
@@ -26,7 +25,6 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
   onEdit,
 }) => {
   const [index, setIndex] = useState(initialIndex);
-  const mainImgRef = useRef<HTMLImageElement>(null);
   const thumbStripRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef<number | null>(null);
   const reduced = prefersReducedMotion();
@@ -48,26 +46,12 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
   );
 
   useEffect(() => {
-    if (!isOpen || !mainImgRef.current || !current) return;
-    if (reduced) return;
-    gsap.killTweensOf(mainImgRef.current);
-    gsap.fromTo(
-      mainImgRef.current,
-      { opacity: 0, scale: 1.03, filter: 'blur(6px)' },
-      { opacity: 1, scale: 1, filter: 'blur(0px)', duration: 0.75, ease: 'expo.out' }
-    );
-  }, [index, isOpen, current?.id, reduced]);
-
-  useEffect(() => {
-    if (!isOpen || !thumbStripRef.current || reduced) return;
+    if (!isOpen || !thumbStripRef.current) return;
     const active = thumbStripRef.current.querySelector<HTMLElement>('[data-active="true"]');
-    if (!active) return;
-    const thumbImg = active.querySelector('img');
-    if (thumbImg) {
-      animate(thumbImg, { scale: [1, 1.04, 1], duration: 650, easing: 'easeInOutSine' });
+    if (active) {
+      active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
     }
-    active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-  }, [index, isOpen, reduced]);
+  }, [index, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -76,29 +60,31 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
       if (e.key === 'ArrowLeft') goTo(index - 1);
       if (e.key === 'ArrowRight') goTo(index + 1);
     };
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', onKey);
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = prevOverflow;
       window.removeEventListener('keydown', onKey);
     };
   }, [isOpen, index, goTo, onClose]);
 
   if (!isOpen || !current) return null;
 
-  return (
+  const content = (
     <AnimatePresence>
       {isOpen && (
         <motion.div
           role="dialog"
           aria-modal="true"
+          aria-label={album.title}
           data-anim-layer="framer"
           data-anim-role="lightbox-shell"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: reduced ? 0.01 : 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="fixed inset-0 z-[60] flex flex-col bg-brand-950/95 backdrop-blur-md"
+          transition={{ duration: reduced ? 0.01 : 0.45, ease: [0.16, 1, 0.3, 1] }}
+          className="fixed inset-0 z-[100] flex flex-col bg-brand-950/97 backdrop-blur-md"
         >
           <div className="flex items-center justify-between gap-3 px-3 sm:px-5 py-3 border-b border-brand-800/80 shrink-0">
             <div className="min-w-0 flex-1">
@@ -131,7 +117,7 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
           </div>
 
           <div
-            className="relative flex-1 min-h-0 flex items-center justify-center px-2 sm:px-8 py-2"
+            className="relative flex-1 min-h-0 w-full flex items-center justify-center overflow-hidden px-12 sm:px-16 py-2"
             onTouchStart={(e) => { touchStartX.current = e.touches[0]?.clientX ?? null; }}
             onTouchEnd={(e) => {
               if (touchStartX.current === null || !hasMultiple) return;
@@ -145,7 +131,7 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
                 <button
                   type="button"
                   onClick={() => goTo(index - 1)}
-                  className="absolute left-1 sm:left-4 z-10 p-2 sm:p-3 rounded-full bg-brand-900/80 border border-brand-700 text-white hover:bg-brand-800 active:scale-95 transition-all"
+                  className="absolute left-2 sm:left-4 z-10 p-2 sm:p-3 rounded-full bg-brand-900/90 border border-brand-700 text-white hover:bg-brand-800 transition-colors"
                   aria-label="Sebelumnya"
                 >
                   <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -153,7 +139,7 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
                 <button
                   type="button"
                   onClick={() => goTo(index + 1)}
-                  className="absolute right-1 sm:right-4 z-10 p-2 sm:p-3 rounded-full bg-brand-900/80 border border-brand-700 text-white hover:bg-brand-800 active:scale-95 transition-all"
+                  className="absolute right-2 sm:right-4 z-10 p-2 sm:p-3 rounded-full bg-brand-900/90 border border-brand-700 text-white hover:bg-brand-800 transition-colors"
                   aria-label="Berikutnya"
                 >
                   <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -161,26 +147,23 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
               </>
             )}
 
-            <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-2">
+            <div className="flex flex-col items-center justify-center w-full h-full max-h-full gap-2 pointer-events-none">
               {isCover && (
-                <span className="text-[9px] font-mono text-terminal-cyan bg-brand-950/90 px-2 py-0.5 rounded border border-brand-700">
+                <span className="text-[9px] font-mono text-terminal-cyan bg-brand-950/90 px-2 py-0.5 rounded border border-brand-700 pointer-events-auto">
                   SAMPUL ALBUM
                 </span>
               )}
               <img
-                ref={mainImgRef}
-                data-anim-layer="gsap"
-                data-anim-role="lightbox-image"
                 key={current.id}
                 src={current.image}
                 alt={album.title}
-                className="max-h-[40vh] sm:max-h-[52vh] md:max-h-[58vh] w-auto max-w-full object-contain rounded-lg border border-brand-800 shadow-2xl"
+                className="pointer-events-auto block max-w-[min(100%,min(90vw,56rem))] max-h-[min(calc(100vh-12rem),70vh)] w-auto h-auto object-contain rounded-lg border border-brand-800 shadow-2xl mx-auto"
                 draggable={false}
               />
             </div>
 
             {hasMultiple && (
-              <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-mono text-slate-500 bg-brand-950/80 px-2 py-0.5 rounded border border-brand-800">
+              <span className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] font-mono text-slate-500 bg-brand-950/90 px-2 py-0.5 rounded border border-brand-800">
                 {index + 1} / {slides.length}
               </span>
             )}
@@ -194,38 +177,42 @@ export const GalleryLightbox: React.FC<GalleryLightboxProps> = ({
             <p className="text-xs text-slate-400 line-clamp-2 mt-0.5">{album.description}</p>
           </div>
 
-          <div className="shrink-0 border-t border-brand-800/80 bg-brand-900/40 px-3 sm:px-4 py-3">
-            <p className="text-[9px] font-mono text-slate-500 mb-2 uppercase tracking-wider">
-              Galeri moment · semua frame
-            </p>
-            <div
-              ref={thumbStripRef}
-              className="flex gap-2 sm:gap-3 overflow-x-auto pb-1 snap-x snap-mandatory"
-            >
-              {slides.map((slide, i) => (
-                <button
-                  key={slide.id}
-                  type="button"
-                  data-active={i === index ? 'true' : 'false'}
-                  onClick={() => setIndex(i)}
-                  className={`relative shrink-0 snap-center rounded-lg overflow-hidden border-2 transition-all duration-500 ease-out hover:scale-[1.03] w-[4.5rem] h-[3.25rem] sm:w-20 sm:h-14 ${
-                    i === index
-                      ? 'border-brand-400 shadow-lg shadow-brand-500/25'
-                      : 'border-brand-800 opacity-70 hover:opacity-100'
-                  }`}
-                >
-                  <img src={slide.image} alt="" className="w-full h-full object-cover" loading="lazy" />
-                  {i === 0 && (
-                    <span className="absolute bottom-0 inset-x-0 bg-brand-950/90 text-[7px] font-mono text-center text-terminal-cyan py-0.5">
-                      SAMPUL
-                    </span>
-                  )}
-                </button>
-              ))}
+          {hasMultiple && (
+            <div className="shrink-0 border-t border-brand-800/80 bg-brand-900/40 px-3 sm:px-4 py-3">
+              <p className="text-[9px] font-mono text-slate-500 mb-2 uppercase tracking-wider">
+                Galeri moment · semua frame
+              </p>
+              <div
+                ref={thumbStripRef}
+                className="flex gap-2 sm:gap-3 overflow-x-auto pb-1 snap-x snap-mandatory justify-center"
+              >
+                {slides.map((slide, i) => (
+                  <button
+                    key={slide.id}
+                    type="button"
+                    data-active={i === index ? 'true' : 'false'}
+                    onClick={() => setIndex(i)}
+                    className={`relative shrink-0 snap-center rounded-lg overflow-hidden border-2 transition-all duration-300 w-16 h-12 sm:w-20 sm:h-14 ${
+                      i === index
+                        ? 'border-brand-400 shadow-lg shadow-brand-500/25 opacity-100'
+                        : 'border-brand-800 opacity-70 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={slide.image} alt="" className="w-full h-full object-cover" loading="lazy" />
+                    {i === 0 && (
+                      <span className="absolute bottom-0 inset-x-0 bg-brand-950/90 text-[7px] font-mono text-center text-terminal-cyan py-0.5">
+                        SAMPUL
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </motion.div>
       )}
     </AnimatePresence>
   );
+
+  return createPortal(content, document.body);
 };

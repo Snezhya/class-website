@@ -60,6 +60,27 @@
   box-shadow: 0 0 40px -10px rgba(59, 130, 246, 0.3);
 }
 
+/* Daftar absen — CSS scroll (tanpa GSAP) */
+@keyframes attendance-scroll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+.attendance-scroll-track {
+  animation: attendance-scroll 50s linear infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .attendance-scroll-track {
+    animation: none;
+  }
+}
+
 /* Page transitions */
 .page-enter {
   opacity: 0;

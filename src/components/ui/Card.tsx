@@ -9,10 +9,8 @@ interface CardProps {
   title?: string;
   terminalTitle?: string;
   onClick?: () => void;
-  /** Framer: hover + entrance (default) */
+  /** Framer: hover ringan pada kartu */
   motion?: boolean;
-  /** Framer: hover only — use inside ScrollReveal (GSAP owns enter) */
-  motionHoverOnly?: boolean;
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -23,7 +21,6 @@ export const Card: React.FC<CardProps> = ({
   terminalTitle = 'system_terminal.sh',
   onClick,
   motion: useMotion = false,
-  motionHoverOnly = false,
   ...props
 }) => {
   const getBaseClass = () => {
@@ -77,14 +74,9 @@ export const Card: React.FC<CardProps> = ({
 
   const base = `${getBaseClass()} p-5 transition-all duration-500 ease-out ${onClick ? 'cursor-pointer hover:border-brand-500/30' : ''} ${className}`;
 
-  if ((useMotion || motionHoverOnly) && !prefersReducedMotion()) {
+  if (useMotion && !prefersReducedMotion()) {
     return (
-      <MotionCard
-        className={base}
-        onClick={onClick}
-        hoverOnly={motionHoverOnly}
-        {...props}
-      >
+      <MotionCard className={base} onClick={onClick} {...props}>
         {body}
       </MotionCard>
     );
