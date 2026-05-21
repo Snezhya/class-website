@@ -1,3 +1,5 @@
+import { DEFAULT_BRAND } from '../constants/brand';
+
 export interface Member {
   id: string;
   name: string;
@@ -82,6 +84,12 @@ export interface SystemSettings {
   showActivityLog: boolean;
   heroTitle: string;
   heroSubtitle: string;
+  logoHeader: string;
+  logoFavicon: string;
+  logoAdmin: string;
+  logoPlaceholder: string;
+  brandTitle: string;
+  brandSubtitle: string;
 }
 
 export const initialMembers: Member[] = [
@@ -392,5 +400,11 @@ export const defaultSettings: SystemSettings = {
   showSchedulePreview: true,
   showActivityLog: true,
   heroTitle: 'XI TJKT 1 PORTAL',
-  heroSubtitle: 'Networking & Telecommunications Systems Developer Terminal. SMKN 1 Boyolali Class Hub.'
+  heroSubtitle: 'Networking & Telecommunications Systems Developer Terminal. SMKN 1 Boyolali Class Hub.',
+  logoHeader: DEFAULT_BRAND.logoHeader,
+  logoFavicon: DEFAULT_BRAND.logoFavicon,
+  logoAdmin: DEFAULT_BRAND.logoAdmin,
+  logoPlaceholder: DEFAULT_BRAND.logoPlaceholder,
+  brandTitle: DEFAULT_BRAND.brandTitle,
+  brandSubtitle: DEFAULT_BRAND.brandSubtitle,
 };

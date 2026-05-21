@@ -101,6 +101,12 @@ CREATE TABLE IF NOT EXISTS public.app_settings (
   show_activity_log     BOOLEAN NOT NULL DEFAULT true,
   hero_title            TEXT NOT NULL DEFAULT 'XI TJKT 1 PORTAL',
   hero_subtitle         TEXT NOT NULL DEFAULT 'Networking & Telecommunications Systems Developer Terminal. SMKN 1 Boyolali Class Hub.',
+  logo_header           TEXT NOT NULL DEFAULT '',
+  logo_favicon          TEXT NOT NULL DEFAULT '/favicon.svg',
+  logo_admin            TEXT NOT NULL DEFAULT '',
+  logo_placeholder      TEXT NOT NULL DEFAULT '/hu-tao-placeholder.png',
+  brand_title           TEXT NOT NULL DEFAULT 'XI TJKT 1',
+  brand_subtitle        TEXT NOT NULL DEFAULT 'SMKN 1 BOYOLALI',
   updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

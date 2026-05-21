@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AppProvider } from './context/AppContext';
 import { ToastProvider } from './context/ToastContext';
+import { SiteBranding } from './components/shared/SiteBranding';
 import { MainLayout } from './layouts/MainLayout';
 
 // Pages
@@ -16,6 +17,7 @@ function App() {
   return (
     <Router>
       <AppProvider>
+        <SiteBranding />
         <ToastProvider>
           <MainLayout>
             <Routes>

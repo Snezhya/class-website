@@ -2,15 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Terminal, Users, Calendar, Image, FileText, ShieldAlert, 
-  Menu, X, Network, Settings, LogOut, Clock 
+  Menu, X, Settings, LogOut, Clock 
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { BrandLogo } from '../components/shared/BrandLogo';
 import { Background } from '../components/shared/Background';
 import { CommandPalette } from '../components/shared/CommandPalette';
 import { Button } from '../components/ui/Button';
 
 export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAdmin, logout } = useApp();
+  const { isAdmin, logout, settings } = useApp();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -52,12 +53,16 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Logo / Class Terminal Brand */}
           <Link to="/" className="flex items-center gap-2.5 select-none group">
-            <div className="w-8 h-8 rounded-lg bg-brand-800 border border-brand-700/80 flex items-center justify-center transition-all duration-300 group-hover:border-brand-500/50">
-              <Network className="w-4 h-4 text-brand-400 group-hover:text-brand-300 transition-colors" />
-            </div>
+            <BrandLogo
+              src={settings.logoHeader || undefined}
+              size={32}
+              className="transition-all duration-300 group-hover:border-brand-500/50"
+            />
             <div className="flex flex-col">
-              <span className="font-display font-bold text-sm tracking-tight text-white">XI TJKT 1</span>
-              <span className="text-[10px] text-slate-500 font-mono">SMKN 1 BOYOLALI</span>
+              <span className="font-display font-bold text-sm tracking-tight text-white">
+                {settings.brandTitle}
+              </span>
+              <span className="text-[10px] text-slate-500 font-mono">{settings.brandSubtitle}</span>
             </div>
           </Link>
 

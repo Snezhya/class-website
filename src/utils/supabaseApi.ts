@@ -35,6 +35,8 @@ const uploadImage = async (bucket: string, folder: string, file: File): Promise<
 export const uploadMemberPhoto = (file: File) => uploadImage('member-photos', 'photos', file);
 export const uploadGalleryPhoto = (file: File) => uploadImage('gallery-photos', 'photos', file);
 export const uploadSiteAsset = (file: File) => uploadImage('site-assets', 'backgrounds', file);
+export const uploadBrandLogo = (file: File, slot: 'header' | 'favicon' | 'admin' | 'placeholder') =>
+  uploadImage('site-assets', `logos/${slot}`, file);
 
 // ============================================================
 // MEMBER
@@ -50,7 +52,7 @@ export const mapDbToMember = (dbRow: any): Member => ({
   skills: Array.isArray(dbRow.skills) ? dbRow.skills : [],
   socialLinks: dbRow.social_links || {},
   status: (dbRow.status as 'active' | 'away' | 'offline') || 'offline',
-  image: dbRow.photo || '/hu-tao-placeholder.png',
+  image: dbRow.photo || defaultSettings.logoPlaceholder,
   order: dbRow.sort_order || 0,
 });
 
@@ -322,7 +324,7 @@ export const deleteNoteDb = async (id: string): Promise<void> => {
 
 const mapDbToGalleryPhoto = (row: any): GalleryPhoto => ({
   id: row.id.toString(),
-  image: row.image || '/hu-tao-placeholder.png',
+  image: row.image || defaultSettings.logoPlaceholder,
   sortOrder: row.sort_order ?? 0,
 });
 
@@ -335,7 +337,7 @@ export const mapDbToGalleryAlbum = (row: any): GalleryAlbum => {
     title: row.title || '',
     category: row.category || 'Event',
     description: row.description || '',
-    coverImage: row.cover_image || '/hu-tao-placeholder.png',
+    coverImage: row.cover_image || defaultSettings.logoPlaceholder,
     date: row.date || new Date().toISOString().split('T')[0],
     photos,
   };
@@ -347,7 +349,7 @@ const mapLegacyGalleryRow = (row: any): GalleryAlbum => ({
   title: row.title || '',
   category: row.category || 'Event',
   description: row.description || '',
-  coverImage: row.image || '/hu-tao-placeholder.png',
+  coverImage: row.image || defaultSettings.logoPlaceholder,
   date: row.date || new Date().toISOString().split('T')[0],
   photos: [],
 });
@@ -544,6 +546,12 @@ export const mapDbToSettings = (row: any): SystemSettings => ({
   showActivityLog: row.show_activity_log ?? defaultSettings.showActivityLog,
   heroTitle: row.hero_title || defaultSettings.heroTitle,
   heroSubtitle: row.hero_subtitle || defaultSettings.heroSubtitle,
+  logoHeader: row.logo_header || defaultSettings.logoHeader,
+  logoFavicon: row.logo_favicon || defaultSettings.logoFavicon,
+  logoAdmin: row.logo_admin || defaultSettings.logoAdmin,
+  logoPlaceholder: row.logo_placeholder || defaultSettings.logoPlaceholder,
+  brandTitle: row.brand_title || defaultSettings.brandTitle,
+  brandSubtitle: row.brand_subtitle || defaultSettings.brandSubtitle,
 });
 
 export const mapSettingsToDb = (s: SystemSettings) => ({
@@ -561,6 +569,12 @@ export const mapSettingsToDb = (s: SystemSettings) => ({
   show_activity_log: s.showActivityLog,
   hero_title: s.heroTitle,
   hero_subtitle: s.heroSubtitle,
+  logo_header: s.logoHeader,
+  logo_favicon: s.logoFavicon,
+  logo_admin: s.logoAdmin,
+  logo_placeholder: s.logoPlaceholder,
+  brand_title: s.brandTitle,
+  brand_subtitle: s.brandSubtitle,
   updated_at: new Date().toISOString(),
 });
 
