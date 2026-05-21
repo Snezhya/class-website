@@ -632,11 +632,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     category: GalleryAlbum['category'];
     coverImage: string;
     childImageUrls: string[];
+    date?: string;
   }) => {
-    const date = new Date().toISOString().split('T')[0];
+    const finalDate = input.date || '';
     if (hasSupabase) {
       try {
-        const added = await addGalleryAlbumDb({ ...input, date });
+        const added = await addGalleryAlbumDb({ ...input, date: finalDate });
         setGallery((prev) => (prev.some((g) => g.id === added.id) ? prev : [added, ...prev]));
         const total = 1 + added.photos.length;
         addActivityLog(`GALLERY DAEMON: Album '${added.title}' (${total} foto) → Supabase`);
@@ -648,7 +649,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         description: input.description,
         category: input.category,
         coverImage: input.coverImage,
-        date,
+        date: finalDate,
         photos: input.childImageUrls.map((url, i) => ({
           id: `p-${i}`,
           image: url,

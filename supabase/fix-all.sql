@@ -97,9 +97,13 @@ CREATE TABLE IF NOT EXISTS public.gallery_album (
                 CHECK (category IN ('Practicum', 'Event', 'Exam', 'Classroom')),
   description TEXT        NOT NULL DEFAULT '',
   cover_image TEXT        NOT NULL DEFAULT '/hu-tao-placeholder.png',
-  date        DATE        NOT NULL DEFAULT CURRENT_DATE,
+  date        DATE        DEFAULT NULL,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Jadikan kolom date opsional di gallery_album (aman jika re-run)
+ALTER TABLE public.gallery_album ALTER COLUMN date DROP NOT NULL;
+ALTER TABLE public.gallery_album ALTER COLUMN date SET DEFAULT NULL;
 
 CREATE TABLE IF NOT EXISTS public.gallery_photo (
   id          BIGSERIAL   PRIMARY KEY,

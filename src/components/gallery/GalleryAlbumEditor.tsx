@@ -31,6 +31,7 @@ export const GalleryAlbumEditor: React.FC<GalleryAlbumEditorProps> = ({
   const [title, setTitle] = useState(album.title);
   const [description, setDescription] = useState(album.description);
   const [category, setCategory] = useState(album.category);
+  const [date, setDate] = useState(album.date);
   const [coverImage, setCoverImage] = useState(album.coverImage);
   const [photos, setPhotos] = useState(album.photos);
   const [busy, setBusy] = useState(false);
@@ -39,6 +40,7 @@ export const GalleryAlbumEditor: React.FC<GalleryAlbumEditorProps> = ({
     setTitle(album.title);
     setDescription(album.description);
     setCategory(album.category);
+    setDate(album.date);
     setCoverImage(album.coverImage);
     setPhotos(album.photos);
   }, [album]);
@@ -50,6 +52,7 @@ export const GalleryAlbumEditor: React.FC<GalleryAlbumEditorProps> = ({
         title: title.trim(),
         description: description.trim(),
         category,
+        date,
         coverImage,
       });
       onUpdated(updated);
@@ -160,6 +163,15 @@ export const GalleryAlbumEditor: React.FC<GalleryAlbumEditorProps> = ({
               <option value="Exam">EXAM</option>
               <option value="Classroom">CLASSROOM</option>
             </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-slate-400">TANGGAL (opsional)</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full p-2.5 bg-brand-950 border border-brand-800 rounded-lg text-white outline-none focus:border-brand-500"
+            />
           </div>
         </div>
 

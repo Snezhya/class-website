@@ -46,6 +46,7 @@ export const Gallery: React.FC = () => {
   const [formTitle, setFormTitle] = useState('');
   const [formDesc, setFormDesc] = useState('');
   const [formCategory, setFormCategory] = useState<GalleryAlbum['category']>('Practicum');
+  const [formDate, setFormDate] = useState('');
   const [formPhotoFiles, setFormPhotoFiles] = useState<File[]>([]);
   const [formPreview, setFormPreview] = useState('/hu-tao-placeholder.png');
   const [isUploading, setIsUploading] = useState(false);
@@ -98,6 +99,7 @@ export const Gallery: React.FC = () => {
         category: formCategory,
         coverImage,
         childImageUrls,
+        date: formDate,
       });
 
       setIsAddModalOpen(false);
@@ -154,6 +156,7 @@ export const Gallery: React.FC = () => {
                 setFormTitle('');
                 setFormDesc('');
                 setFormCategory('Practicum');
+                setFormDate('');
                 setFormPhotoFiles([]);
                 setFormPreview('/hu-tao-placeholder.png');
                 setIsAddModalOpen(true);
@@ -323,6 +326,15 @@ export const Gallery: React.FC = () => {
               <option value="Exam">EXAM</option>
               <option value="Classroom">CLASSROOM</option>
             </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-slate-400">TANGGAL (opsional)</label>
+            <input
+              type="date"
+              value={formDate}
+              onChange={(e) => setFormDate(e.target.value)}
+              className="w-full p-2.5 bg-brand-950 border border-brand-800 rounded-lg text-white outline-none focus:border-brand-500"
+            />
           </div>
           <div className="space-y-1">
             <label className="text-slate-400">FOTO ALBUM * (banyak file)</label>

@@ -362,7 +362,7 @@ export const mapDbToGalleryAlbum = (row: any): GalleryAlbum => {
     category: row.category || 'Event',
     description: row.description || '',
     coverImage: row.cover_image || defaultSettings.logoPlaceholder,
-    date: row.date || new Date().toISOString().split('T')[0],
+    date: row.date || '',
     photos,
   };
 };
@@ -374,7 +374,7 @@ const mapLegacyGalleryRow = (row: any): GalleryAlbum => ({
   category: row.category || 'Event',
   description: row.description || '',
   coverImage: row.image || defaultSettings.logoPlaceholder,
-  date: row.date || new Date().toISOString().split('T')[0],
+  date: row.date || '',
   photos: [],
 });
 
@@ -416,7 +416,7 @@ export const addGalleryAlbumDb = async (input: {
       description: input.description,
       category: input.category,
       cover_image: input.coverImage,
-      date: input.date,
+      date: input.date || null,
     }])
     .select()
     .single();
@@ -433,7 +433,7 @@ export const addGalleryAlbumDb = async (input: {
           description: input.description,
           category: input.category,
           image: input.coverImage,
-          date: input.date,
+          date: input.date || null,
         }])
         .select()
         .single();
@@ -488,7 +488,7 @@ export const updateGalleryAlbumDb = async (
   if (fields.title !== undefined) payload.title = fields.title;
   if (fields.description !== undefined) payload.description = fields.description;
   if (fields.category !== undefined) payload.category = fields.category;
-  if (fields.date !== undefined) payload.date = fields.date;
+  if (fields.date !== undefined) payload.date = fields.date || null;
   if (fields.coverImage !== undefined) payload.cover_image = fields.coverImage;
 
   const { error } = await supabase.from('gallery_album').update(payload).eq('id', parseInt(albumId));
@@ -498,7 +498,7 @@ export const updateGalleryAlbumDb = async (
       if (fields.title !== undefined) legacy.title = fields.title;
       if (fields.description !== undefined) legacy.description = fields.description;
       if (fields.category !== undefined) legacy.category = fields.category;
-      if (fields.date !== undefined) legacy.date = fields.date;
+      if (fields.date !== undefined) legacy.date = fields.date || null;
       if (fields.coverImage !== undefined) legacy.image = fields.coverImage;
       const { data, error: legacyErr } = await supabase
         .from('gallery')
