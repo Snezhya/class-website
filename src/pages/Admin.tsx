@@ -6,12 +6,15 @@ import { useToast } from '../context/ToastContext';
 import { uploadMemberPhoto, uploadSiteAsset } from '../utils/supabaseApi';
 import { AdminBrandPanel } from '../components/admin/AdminBrandPanel';
 import { AdminAbsenPanel } from '../components/admin/AdminAbsenPanel';
+import { AdminMemberEditor } from '../components/admin/AdminMemberEditor';
+import { AdminContentPanel } from '../components/admin/AdminContentPanel';
 import { TerminalOutput } from '../components/motion/TerminalOutput';
 import { useAnimeShake } from '../hooks/useAnimeMicro';
 import { BrandLogo } from '../components/shared/BrandLogo';
 import { 
-  ShieldAlert, Lock, Eye, EyeOff, Trash2, RefreshCw
+  ShieldAlert, Lock, Eye, EyeOff, Trash2, RefreshCw, Pencil
 } from 'lucide-react';
+import { type Member } from '../data/initialData';
 
 
 export const Admin: React.FC = () => {
@@ -19,6 +22,7 @@ export const Admin: React.FC = () => {
     isAdmin, login, logout, settings, updateSettings, resetSettings,
     members, addMember, deleteMember, reorderMembers
   } = useApp();
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
   const { toast } = useToast();
 
   // Login Form State
@@ -30,7 +34,9 @@ export const Admin: React.FC = () => {
   useAnimeShake(loginTerminalRef, loginShake);
 
   // Admin Workspace State
-  const [activeAdminTab, setActiveAdminTab] = useState<'overview' | 'brand' | 'customization' | 'members' | 'absen'>('overview');
+  const [activeAdminTab, setActiveAdminTab] = useState<
+    'overview' | 'brand' | 'customization' | 'members' | 'absen' | 'content'
+  >('overview');
   
   // Member Form State for Admin Quick Add
   const [memName, setMemName] = useState('');
@@ -290,6 +296,16 @@ export const Admin: React.FC = () => {
         >
           DAFTAR ABSEN
         </button>
+        <button
+          onClick={() => setActiveAdminTab('content')}
+          className={`px-4 py-2 text-xs font-mono font-medium rounded-lg transition-all flex-1 text-center whitespace-nowrap ${
+            activeAdminTab === 'content'
+              ? 'bg-brand-800 border border-brand-700 text-white'
+              : 'text-slate-400 hover:text-white hover:bg-brand-900/40'
+          }`}
+        >
+          KONTEN SITUS
+        </button>
       </div>
 
       {/* Admin Tabs Content */}
@@ -426,10 +442,104 @@ export const Admin: React.FC = () => {
 
         {activeAdminTab === 'absen' && <AdminAbsenPanel />}
 
+        {activeAdminTab === 'content' && <AdminContentPanel />}
+
         {/* Tab: Customization & Background controls */}
         {activeAdminTab === 'customization' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
+            {/* THEME PICKER */}
+            <Card title="Global Theme Preset">
+              <div className="space-y-3 font-mono text-xs">
+                <p className="text-[10px] text-slate-500">
+                  Pilih tema tampilan. Perubahan langsung terlihat oleh semua pengguna via Supabase Realtime.
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {([
+                    {
+                      key: 'glass-blur',
+                      label: 'Glass Blur',
+                      desc: 'Frosted heavy blur',
+                      preview: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(99,179,237,0.05) 100%)',
+                      border: 'rgba(255,255,255,0.15)',
+                      badge: '✨',
+                    },
+                    {
+                      key: 'glass',
+                      label: 'Glass',
+                      desc: 'Subtle glassmorphism',
+                      preview: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(59,130,246,0.04) 100%)',
+                      border: 'rgba(255,255,255,0.10)',
+                      badge: '🪟',
+                    },
+                    {
+                      key: 'dark-navy',
+                      label: 'Dark Navy',
+                      desc: 'Default dark theme',
+                      preview: 'linear-gradient(135deg, #0a0f1e 0%, #0f172a 100%)',
+                      border: 'rgba(30,41,59,0.8)',
+                      badge: '🌊',
+                    },
+                    {
+                      key: 'dark-slate',
+                      label: 'Dark Slate',
+                      desc: 'Slightly warmer dark',
+                      preview: 'linear-gradient(135deg, #0f1623 0%, #1a2236 100%)',
+                      border: 'rgba(36,49,72,0.8)',
+                      badge: '🔷',
+                    },
+                    {
+                      key: 'pure-black',
+                      label: 'Pure Black',
+                      desc: 'AMOLED ink black',
+                      preview: 'linear-gradient(135deg, #000000 0%, #0a0a0a 100%)',
+                      border: 'rgba(17,17,17,0.9)',
+                      badge: '⬛',
+                    },
+                    {
+                      key: 'light',
+                      label: 'Light',
+                      desc: 'Clean bright mode',
+                      preview: 'linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%)',
+                      border: 'rgba(203,213,225,0.8)',
+                      badge: '☀️',
+                    },
+                  ] as const).map((t) => {
+                    const isActive = settings.theme === t.key;
+                    return (
+                      <button
+                        key={t.key}
+                        onClick={() => {
+                          updateSettings({ theme: t.key });
+                          toast(`Theme changed to ${t.label}`, 'success');
+                        }}
+                        className={`relative group p-3 rounded-xl border-2 text-left transition-all duration-300 ${
+                          isActive
+                            ? 'border-brand-400 shadow-lg shadow-brand-500/20 scale-[1.02]'
+                            : 'border-brand-800/60 hover:border-brand-600 hover:scale-[1.01]'
+                        }`}
+                        style={{ background: t.preview }}
+                      >
+                        {/* Active badge */}
+                        {isActive && (
+                          <span className="absolute top-1.5 right-1.5 text-[8px] font-bold text-brand-300 bg-brand-950/80 px-1.5 py-0.5 rounded border border-brand-600">
+                            ACTIVE
+                          </span>
+                        )}
+                        <span className="text-base">{t.badge}</span>
+                        <p className={`text-[11px] font-bold mt-1 ${t.key === 'light' ? 'text-slate-800' : 'text-white'}`}>
+                          {t.label}
+                        </p>
+                        <p className={`text-[9px] mt-0.5 ${t.key === 'light' ? 'text-slate-500' : 'text-slate-400'}`}>
+                          {t.desc}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </Card>
+
             {/* Color themes and backgrounds */}
             <Card title="Canvas Customization Panel">
               <div className="space-y-6 font-mono text-xs">
@@ -703,6 +813,7 @@ export const Admin: React.FC = () => {
                       <th className="p-4">Role Designation</th>
                       <th className="p-4 text-center">Core</th>
                       <th className="p-4 text-center">Order Controls</th>
+                      <th className="p-4 text-center">Edit</th>
                       <th className="p-4 text-right">Registry Delete</th>
                     </tr>
                   </thead>
@@ -741,6 +852,18 @@ export const Admin: React.FC = () => {
                             </button>
                           </div>
                         </td>
+                        <td className="p-4">
+                          <div className="flex justify-center">
+                            <button
+                              type="button"
+                              onClick={() => setEditingMember(mem)}
+                              className="p-1.5 text-brand-400 hover:text-white rounded hover:bg-brand-800 transition-colors"
+                              title="Edit semua data siswa"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
                         <td className="p-4 text-right">
                           <button
                             onClick={() => {
@@ -765,6 +888,12 @@ export const Admin: React.FC = () => {
         )}
 
       </div>
+
+      <AdminMemberEditor
+        member={editingMember}
+        isOpen={!!editingMember}
+        onClose={() => setEditingMember(null)}
+      />
     </div>
   );
 };

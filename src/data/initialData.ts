@@ -73,7 +73,7 @@ export interface GalleryAlbum {
 export type GalleryItem = GalleryAlbum & { image?: string };
 
 export interface SystemSettings {
-  theme: 'dark-navy' | 'dark-slate' | 'pure-black';
+  theme: 'dark-navy' | 'dark-slate' | 'pure-black' | 'glass-blur' | 'glass' | 'light';
   accentColor: '#3b82f6' | '#10b981' | '#f59e0b' | '#ef4444' | '#8b5cf6' | '#06b6d4';
   backgroundType: 'gradient' | 'grid' | 'dot' | 'image';
   backgroundImage: string;

@@ -4,7 +4,9 @@ import { useToast } from '../../context/ToastContext';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { sortByAbsen, swapAbsenInList, getNextAbsenNumber } from '../../utils/attendance';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Pencil } from 'lucide-react';
+import { AdminMemberEditor } from './AdminMemberEditor';
+import { type Member } from '../../data/initialData';
 
 export const AdminAbsenPanel: React.FC = () => {
   const { members, addMember, editMember, deleteMember, reorderAbsen } = useApp();
@@ -16,6 +18,7 @@ export const AdminAbsenPanel: React.FC = () => {
   const [role, setRole] = useState('Anggota');
   const [isCore, setIsCore] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
 
   const sorted = sortByAbsen(members);
 
@@ -129,6 +132,7 @@ export const AdminAbsenPanel: React.FC = () => {
                 <th className="p-3">NIS</th>
                 <th className="p-3">Tipe</th>
                 <th className="p-3 text-center">Urut</th>
+                <th className="p-3 text-center">Edit</th>
                 <th className="p-3" />
               </tr>
             </thead>
@@ -179,6 +183,16 @@ export const AdminAbsenPanel: React.FC = () => {
                       </button>
                     </div>
                   </td>
+                  <td className="p-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => setEditingMember(m)}
+                      className="p-1.5 text-brand-400 hover:bg-brand-800 rounded"
+                      title="Edit semua data siswa"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </td>
                   <td className="p-2 text-right">
                     <button
                       type="button"
@@ -196,6 +210,11 @@ export const AdminAbsenPanel: React.FC = () => {
           </table>
         </div>
       </Card>
+      <AdminMemberEditor
+        member={editingMember}
+        isOpen={!!editingMember}
+        onClose={() => setEditingMember(null)}
+      />
     </div>
   );
 };

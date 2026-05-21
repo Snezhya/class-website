@@ -74,7 +74,8 @@ export const mapMemberToDb = (member: Omit<Member, 'id'>) => ({
   status: member.status,
   photo: member.image,
   sort_order: member.order,
-  absen_number: member.absen,
+  // Gunakan absen jika valid (>0), fallback ke sort_order
+  absen_number: (member.absen && member.absen > 0) ? member.absen : member.order,
 });
 
 export const fetchMembers = async (): Promise<Member[]> => {
@@ -556,7 +557,9 @@ export const setAlbumCoverFromChildDb = async (albumId: string, photoId: string)
 // ============================================================
 
 export const mapDbToSettings = (row: any): SystemSettings => ({
-  theme: row.theme || defaultSettings.theme,
+  theme: (['dark-navy','dark-slate','pure-black','glass-blur','glass','light'].includes(row.theme)
+    ? row.theme
+    : defaultSettings.theme) as SystemSettings['theme'],
   accentColor: row.accent_color || defaultSettings.accentColor,
   backgroundType: row.background_type || defaultSettings.backgroundType,
   backgroundImage: row.background_image || defaultSettings.backgroundImage,
