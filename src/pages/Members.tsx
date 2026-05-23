@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { Card } from '../components/ui/Card';
 import { Modal } from '../components/ui/Modal';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/shared/EmptyState';
-import { Search, User, Terminal, Award, ListOrdered } from 'lucide-react';
+import { Search, User, Terminal, Award, ListOrdered, Download, CheckCircle } from 'lucide-react';
 import { type Member } from '../data/initialData';
 import { formatAbsen, sortByAbsen } from '../utils/attendance';
 import { TerminalOutput } from '../components/motion/TerminalOutput';
 import { MotionCard } from '../components/motion/MotionCard';
 import { FadeIn } from '../components/motion/FadeIn';
 import { StaggerReveal, StaggerItem } from '../components/motion/StaggerReveal';
+import { ProfileCardPNG } from '../components/shared/ProfileCardPNG';
+import html2canvas from 'html2canvas';
 
 const Github = (props: any) => (
   <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -44,6 +46,9 @@ export const Members: React.FC = () => {
   const [viewByAbsen, setViewByAbsen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<any>(null);
   const [inspectLines, setInspectLines] = useState<string[]>([]);
+  const [downloading, setDownloading] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   // URL search parameter check
   useEffect(() => {
@@ -113,6 +118,29 @@ export const Members: React.FC = () => {
   const handleInspectMember = (member: Member) => {
     setSelectedMember(member);
     setInspectLines(buildInspectLines(member));
+  };
+
+  const handleDownloadInspect = async (member: Member) => {
+    if (!cardRef.current || downloading) return;
+    setDownloading(true);
+    try {
+      // Wait a tick so the hidden card is fully painted
+      await new Promise(r => setTimeout(r, 120));
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      const link = document.createElement('a');
+      link.download = `profile_${member.name.replace(/\s+/g, '_').toLowerCase()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      setDownloaded(true);
+      setTimeout(() => setDownloaded(false), 2500);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -350,7 +378,10 @@ export const Members: React.FC = () => {
         )}
       </div>
 
-      {/* 3. Detailed Profile Inspector Modal (Terminal Linux UI) */}
+      {/* Hidden card for PNG capture */}
+      {selectedMember && <ProfileCardPNG member={selectedMember} cardRef={cardRef} />}
+
+      {/* 3. Detailed Profile Inspector Modal */}
       <Modal
         isOpen={!!selectedMember}
         onClose={() => {
@@ -361,17 +392,24 @@ export const Members: React.FC = () => {
         size="lg"
       >
         {selectedMember && (
-          <div key={selectedMember.id} className="space-y-6">
-            {/* Terminal Window frame mockup inside the modal */}
-            <div className="bg-terminal-dark border border-brand-800 rounded-lg overflow-hidden shadow-2xl font-mono text-xs">
-              <div className="flex items-center justify-between px-3 py-1.5 border-b border-brand-800 bg-brand-950/60 select-none">
-                <span className="text-slate-500 flex items-center gap-1.5">
-                  <Terminal className="w-3 h-3 text-terminal-green" />
-                  <span>inspect_client_output</span>
-                </span>
+          <div key={selectedMember.id} className="space-y-5">
+
+            {/* ── Terminal Output Block ── */}
+            <div className="bg-[#060d18] border border-brand-800 rounded-xl overflow-hidden shadow-2xl font-mono text-xs">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-brand-800 bg-brand-950/80 select-none">
+                <div className="flex items-center gap-3">
+                  <div className="flex gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-terminal-green/80" />
+                  </div>
+                  <span className="text-slate-500 flex items-center gap-1.5 ml-2">
+                    <Terminal className="w-3 h-3 text-terminal-green" />
+                    <span>inspect_client_output</span>
+                  </span>
+                </div>
                 <span className="w-1.5 h-1.5 rounded-full bg-terminal-green animate-pulse" />
               </div>
-              
               <div className="p-4 text-terminal-green/90 overflow-x-auto min-h-[10rem]">
                 <TerminalOutput
                   key={selectedMember.id}
@@ -383,53 +421,103 @@ export const Members: React.FC = () => {
               </div>
             </div>
 
-            {/* Roster Bio & Social Section */}
-            <div className="flex flex-col sm:flex-row gap-6 items-center sm:items-start p-4 border border-brand-850 rounded-xl bg-brand-950/20">
-              <img
-                src={selectedMember.image}
-                alt={selectedMember.name}
-                className="w-24 h-24 rounded-xl object-cover border border-brand-700 bg-brand-950"
-              />
-              
-              <div className="flex-1 space-y-4 text-center sm:text-left">
-                <div>
-                  <h2 className="text-xl font-bold text-white">{selectedMember.name}</h2>
-                  <p className="text-xs text-slate-500 font-mono mt-0.5">NIS: {selectedMember.nis} • Role: {selectedMember.role}</p>
-                </div>
-                
-                <p className="text-xs text-slate-400 leading-relaxed font-sans">
-                  {selectedMember.bio}
-                </p>
+            {/* ── Stats Row ── */}
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-brand-800 bg-brand-950/60 p-4">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-mono">Hierarchy</p>
+                <p className="mt-1.5 text-sm font-bold text-white font-mono">{selectedMember.isCore ? 'CORE_CLASS_COUNCIL' : 'GENERAL_ROSTER'}</p>
+              </div>
+              <div className="rounded-xl border border-brand-800 bg-brand-950/60 p-4">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-mono">Current Status</p>
+                <p className="mt-1.5 text-sm font-bold text-white font-mono">{selectedMember.status.toUpperCase()}</p>
+              </div>
+              <div className="rounded-xl border border-brand-800 bg-brand-950/60 p-4">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-mono">Skill Set</p>
+                <p className="mt-1.5 text-sm font-bold text-white">{selectedMember.skills.length} validated techs</p>
+              </div>
+            </div>
 
-                {/* Skill List */}
-                <div className="space-y-1.5 text-left">
-                  <span className="text-[10px] uppercase font-mono text-slate-500">Validated Skills</span>
-                  <div className="flex flex-wrap justify-center sm:justify-start gap-1">
-                    {selectedMember.skills.map((skill: string) => (
-                      <span key={skill} className="text-[10px] font-mono text-slate-300 bg-brand-800 border border-brand-700 px-2.5 py-0.5 rounded">
-                        {skill}
-                      </span>
-                    ))}
+            {/* ── Profile Card Preview (downloadable) ── */}
+            <div className="rounded-2xl border border-brand-700/60 bg-gradient-to-br from-brand-900/80 to-brand-950/90 overflow-hidden">
+              {/* Card Header */}
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-brand-800/70">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-4 rounded-full bg-brand-500" />
+                  <span className="text-[11px] uppercase tracking-[0.2em] text-slate-400 font-mono">Profile Card Preview</span>
+                </div>
+                <button
+                  onClick={() => handleDownloadInspect(selectedMember)}
+                  disabled={downloading}
+                  className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold font-mono transition-all duration-200 ${
+                    downloaded
+                      ? 'bg-terminal-green/20 border border-terminal-green/40 text-terminal-green'
+                      : downloading
+                      ? 'bg-brand-800/50 border border-brand-700 text-slate-500 cursor-wait'
+                      : 'bg-brand-700/60 border border-brand-600 text-white hover:bg-brand-600/70 hover:border-brand-500 active:scale-95'
+                  }`}
+                >
+                  {downloaded ? (
+                    <><CheckCircle className="w-3.5 h-3.5" />Downloaded!</>
+                  ) : downloading ? (
+                    <><span className="w-3 h-3 border border-slate-500 border-t-transparent rounded-full animate-spin" />Rendering...</>
+                  ) : (
+                    <><Download className="w-3.5 h-3.5" />Download PNG</>
+                  )}
+                </button>
+              </div>
+
+              {/* Bio + Avatar section */}
+              <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start p-5">
+                <div className="relative shrink-0">
+                  <img
+                    src={selectedMember.image}
+                    alt={selectedMember.name}
+                    className="w-[88px] h-[88px] rounded-2xl object-cover border-2 border-brand-700 bg-brand-950"
+                  />
+                  <span className={`absolute -bottom-1.5 -right-1.5 w-4 h-4 rounded-full border-2 border-brand-900 ${
+                    selectedMember.status === 'active' ? 'bg-terminal-green' :
+                    selectedMember.status === 'away' ? 'bg-terminal-yellow' : 'bg-slate-500'
+                  }`} />
+                </div>
+
+                <div className="flex-1 space-y-3 text-center sm:text-left">
+                  <div>
+                    <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-brand-400 mb-1">
+                      {selectedMember.isCore ? '◆ CORE_CLASS_COUNCIL' : '○ GENERAL_ROSTER'}
+                    </p>
+                    <h2 className="text-xl font-extrabold text-white tracking-tight">{selectedMember.name}</h2>
+                    <p className="text-[11px] text-slate-500 font-mono mt-0.5">NIS: {selectedMember.nis} · {selectedMember.role}</p>
                   </div>
-                </div>
+                  <p className="text-xs text-slate-400 leading-relaxed">{selectedMember.bio}</p>
 
-                {/* Social links */}
-                <div className="flex justify-center sm:justify-start gap-2 pt-2">
-                  {selectedMember.socialLinks?.github && (
-                    <a href={selectedMember.socialLinks.github} target="_blank" rel="noreferrer">
-                      <Button size="sm" variant="secondary" icon={Github}>GitHub</Button>
-                    </a>
-                  )}
-                  {selectedMember.socialLinks?.instagram && (
-                    <a href={selectedMember.socialLinks.instagram} target="_blank" rel="noreferrer">
-                      <Button size="sm" variant="secondary" icon={Instagram}>Instagram</Button>
-                    </a>
-                  )}
-                  {selectedMember.socialLinks?.linkedin && (
-                    <a href={selectedMember.socialLinks.linkedin} target="_blank" rel="noreferrer">
-                      <Button size="sm" variant="secondary" icon={Linkedin}>LinkedIn</Button>
-                    </a>
-                  )}
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] uppercase font-mono text-slate-500">Validated Skills</span>
+                    <div className="flex flex-wrap justify-center sm:justify-start gap-1.5">
+                      {selectedMember.skills.map((skill: string) => (
+                        <span key={skill} className="text-[10px] font-mono text-violet-300 bg-violet-900/30 border border-violet-800/50 px-2.5 py-0.5 rounded-md">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-center sm:justify-start gap-2 pt-1">
+                    {selectedMember.socialLinks?.github && (
+                      <a href={selectedMember.socialLinks.github} target="_blank" rel="noreferrer">
+                        <Button size="sm" variant="secondary" icon={Github}>GitHub</Button>
+                      </a>
+                    )}
+                    {selectedMember.socialLinks?.instagram && (
+                      <a href={selectedMember.socialLinks.instagram} target="_blank" rel="noreferrer">
+                        <Button size="sm" variant="secondary" icon={Instagram}>Instagram</Button>
+                      </a>
+                    )}
+                    {selectedMember.socialLinks?.linkedin && (
+                      <a href={selectedMember.socialLinks.linkedin} target="_blank" rel="noreferrer">
+                        <Button size="sm" variant="secondary" icon={Linkedin}>LinkedIn</Button>
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
